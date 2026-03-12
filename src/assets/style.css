@@ -32,6 +32,19 @@ html, body {
     box-shadow: 0 0 10px rgba(50,255,50,0.2);
 }
 
+.terminal-btns {
+    display: flex;
+    justify-content: space-between;
+}
+
+.schema.secondary {
+    border: 1px solid var(--danger);
+    border-color: var(--warning);
+    font-size: 0.875rem;
+    padding: 10px;
+    color: var(--warning);
+}
+
 .ascii-banner {
     color: var(--green-dim);
     font-size: 13px;

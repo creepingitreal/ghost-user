@@ -1,3 +1,45 @@
+<template>
+  <div class="container">
+    <div class="terminal">
+      <Banner small clickable @banner-click="onBannerClick" />
+
+      <h1>{{ title }}</h1>
+
+      <div class="schema" style="white-space: pre-wrap">{{ puzzle?.story }}</div>
+
+      <p><strong>Task:</strong> {{ puzzle?.prompt }}</p>
+
+      <textarea
+          id="sql"
+          v-model="sql"
+          placeholder="SELECT ..."
+          @input="clearErrorMessage()"
+      ></textarea>
+      <div class="terminal-btns">
+<!--        <button class="btn" @click="copySql">Copy SQL</button>-->
+        <button class="btn" @click="runQuery">Run Query</button>
+        <button class="btn secondary" @click="revealHint">💡 Show Hint</button>
+      </div>
+      <div v-if="hintVisible" class="schema secondary" style="margin-top:8px; white-space: pre-wrap;">
+        <p>
+          <strong>Solution (hint):</strong>
+        </p>
+        <pre style="white-space: pre-wrap; margin:0">{{ puzzle?.solutionSql }}</pre>
+      </div>
+
+      <div id="result" :class="messageClass" v-if="message">{{ message }}</div>
+      <div class="success" v-if="clue">CLUE: {{ clue }}</div>
+
+      <div style="margin-top: 10px;">
+        <router-link class="btn" :to="backTo">◀ Back</router-link>
+        <router-link v-if="unlockedNext" class="btn" :to="nextTo">Next ▶</router-link>
+        <span v-else class="btn" style="opacity:.5; pointer-events:none;">Next ▶</span>
+      </div>
+
+      <ResultsTable :results="results" />
+    </div>
+  </div>
+</template>
 
 <script setup>
 import ResultsTable from '../components/ResultsTable.vue'
@@ -40,7 +82,11 @@ const clue = ref('')
 const unlockedNext = computed(() => store.isSolved(mode.value, id.value))
 const hintVisible = ref(false)
 
-watchEffect(() => { if (puzzle.value) sql.value = puzzle.value.placeholder || '' })
+const clearErrorMessage = () => {
+  if(message.value && messageClass.value === 'error') {
+    message.value = ''
+  }
+}
 
 function onBannerClick() {
   const ok = window.confirm('Return to home? Progress is saved.')
@@ -90,40 +136,3 @@ function onSuccess() {
   clue.value = (puzzle.value && puzzle.value.clue) || ''
 }
 </script>
-
-<template>
-  <div class="container">
-    <div class="terminal">
-      <Banner small clickable @banner-click="onBannerClick" />
-
-      <h1>{{ title }}</h1>
-
-      <!-- STORY PROMPT -->
-      <div class="schema" style="white-space: pre-wrap">{{ puzzle?.story }}</div>
-
-      <p><strong>Task:</strong> {{ puzzle?.prompt }}</p>
-
-      <label for="sql">SQL</label>
-      <button class="btn" @click="copySql">Copy SQL</button>
-      <button class="btn secondary" @click="revealHint">💡 Show Hint</button>
-      <div v-if="hintVisible" class="schema" style="margin-top:8px; white-space: pre-wrap;">
-        <strong>Solution (hint):</strong>
-        <pre style="white-space: pre-wrap; margin:0">{{ puzzle?.solutionSql }}</pre>
-      </div>
-
-      <textarea id="sql" v-model="sql"></textarea>
-      <button class="btn" @click="runQuery">Run Query</button>
-
-      <div id="result" :class="messageClass" v-if="message">{{ message }}</div>
-      <div class="success" v-if="clue">CLUE: {{ clue }}</div>
-
-      <div style="margin-top: 10px;">
-        <router-link class="btn" :to="backTo">◀ Back</router-link>
-        <router-link v-if="unlockedNext" class="btn" :to="nextTo">Next ▶</router-link>
-        <span v-else class="btn" style="opacity:.5; pointer-events:none;">Next ▶</span>
-      </div>
-
-      <ResultsTable :results="results" />
-    </div>
-  </div>
-</template>
