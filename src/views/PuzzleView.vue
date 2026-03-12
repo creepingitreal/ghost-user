@@ -15,12 +15,19 @@
           placeholder="SELECT ..."
           @input="clearErrorMessage()"
       ></textarea>
+
       <div class="terminal-btns">
 <!--        <button class="btn" @click="copySql">Copy SQL</button>-->
-        <button class="btn" @click="runQuery">Run Query</button>
-        <button class="btn secondary" @click="revealHint">💡 Show Hint</button>
+        <button class="btn" @click="runQuery">
+          Run Query
+        </button>
+        <button class="btn secondary" @click="revealHint">
+          💡 Show Hint
+        </button>
       </div>
-      <div v-if="hintVisible" class="schema secondary" style="margin-top:8px; white-space: pre-wrap;">
+      <div
+          v-if="hintVisible"
+          class="schema secondary">
         <p>
           <strong>Solution (hint):</strong>
         </p>
