@@ -12,7 +12,7 @@
 html, body {
     max-width: 840px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 5px;
     background: var(--bg);
     color: var(--green);
     font-family: var(--font-mono);
