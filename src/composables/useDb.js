@@ -12,7 +12,7 @@ export function useDb() {
 
             const db = new SQL.Database()
 
-            const seedUrl = `${import.meta.env.BASE_URL}db/escape-db.sql`
+            const seedUrl = `${import.meta.env.BASE_URL}db/ghost-user-db.sql`
             const res = await fetch(seedUrl)
             if (!res.ok) {
                 throw new Error(`Failed to load seed SQL: ${res.status}`)
