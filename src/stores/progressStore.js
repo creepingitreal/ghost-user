@@ -35,6 +35,16 @@ export const useProgressStore = defineStore('progress', {
             this.advanced = {}
             save(this.$state)
         },
+        markHintUsed(mode, id) {
+            const key = mode === 'basic' ? 'basicHints' : 'advancedHints'
+            if (!this[key]) this[key] = {}
+            this[key][id] = true
+            save(this.$state)
+        },
+        isHintUsed(mode, id) {
+            const key = mode === 'basic' ? 'basicHints' : 'advancedHints'
+            return !!this[key]?.[id]
+        },
         getSolveTime(mode, id) {
             return this[mode][id]?.timeMs || null
         }

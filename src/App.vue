@@ -1,3 +1,8 @@
+<script setup>
+import ControlPanel from "./components/ControlPanel.vue";
+</script>
 <template>
-  <router-view />
+  <control-panel>
+    <router-view />
+  </control-panel>
 </template>

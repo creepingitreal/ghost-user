@@ -34,9 +34,10 @@
 <script setup>
 import { computed } from 'vue'
 import { useProgressStore } from '../stores/progressStore'
+import {pinia} from "../plugins/pinia.js";
 import Banner from "../components/Banner.vue";
 
-const progress = useProgressStore()
+const progress = useProgressStore(pinia)
 
 function formatTime(ms) {
   if (!ms || ms <= 0) return '—'

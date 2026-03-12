@@ -12,19 +12,28 @@
       <button class="icon-btn" @click="resetProgress">
         🔁
       </button>
+
+
+      <button class="icon-btn" @click="theme.toggle()">
+        {{ theme.mode === 'light' ? '🌙' : '☀️' }}
+      </button>
     </div>
   </div>
+  <slot/>
 </template>
 
 <script setup>
 import { useTimerStore } from '../stores/timerStore.js'
 import { useSoundStore } from '../stores/soundStore.js'
 import { useProgressStore } from '../stores/progressStore.js'
+import {pinia} from "../plugins/pinia.js";
 import {computed} from "vue";
+import {useThemeStore} from "../stores/themeStore.js";
 
+const theme = useThemeStore()
 const timer = useTimerStore()
 const sound = useSoundStore()
-const progress = useProgressStore()
+const progress = useProgressStore(pinia)
 
 const soundMuted = computed(() => sound.muted)
 const formattedTime = computed(() => timer.displayTime)

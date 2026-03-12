@@ -84,12 +84,14 @@ textarea {
 .error   { color: var(--danger); }
 
 .control-panel {
+    align-items: center;
     display: flex;
+    max-width: 80vw;
     justify-content: space-between;
     background: #000;
     border-bottom: 1px solid var(--green);
     padding: 8px 0;
-    margin-bottom: 10px;
+    margin: 0 auto;
     color: var(--green-dim);
 }
 .icon-btn {
@@ -99,4 +101,79 @@ textarea {
     margin-left: 10px;
     padding: 4px 8px;
     cursor: pointer;
+}
+
+/* -------------------------------------------------------
+   LIGHT THEME (enabled when <body class="light"> is applied)
+   ------------------------------------------------------- */
+
+body.light {
+    --bg: #f8fafc;               /* very light blue-grey */
+    --green: #0e4d0e;            /* dark green for text */
+    --green-dim: #1d7a1d;        /* slightly brighter green */
+    --danger: #b00020;           /* material red */
+    --warning: #b08900;          /* gold-ish amber */
+
+    background: var(--bg);
+    color: #0a0a0a;              /* darker text color */
+}
+
+/* Terminal container */
+body.light .terminal {
+    background: #ffffff;
+    color: #0a0a0a;
+    border: 2px solid #0a0a0a;
+    box-shadow: 0 0 8px rgba(0,0,0,0.08);
+}
+
+/* Buttons */
+body.light .btn {
+    background: #ffffff;
+    color: #0a0a0a;
+    border: 1px solid #0a0a0a;
+}
+
+body.light .btn.secondary {
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
+/* Textarea / input fields */
+body.light textarea,
+body.light input,
+body.light .schema,
+body.light #output {
+    background: #ffffff;
+    color: #0a0a0a;
+    border-color: #0a0a0a;
+}
+
+/* ASCII banners */
+body.light .ascii-banner,
+body.light .ascii-small {
+    color: #0a0a0a;
+}
+
+/* Success & Error */
+body.light .success {
+    color: #1d7a1d; /* dim green but readable */
+}
+
+body.light .error {
+    color: #b00020;
+}
+
+/* Tables */
+body.light table,
+body.light th,
+body.light td {
+    border-color: #0a0a0a !important;
+    color: #0a0a0a;
+}
+
+/* Control Panel (if using one) */
+body.light .control-panel {
+    background: #fff;
+    border-bottom: 1px solid #0a0a0a;
+    color: #0a0a0a;
 }

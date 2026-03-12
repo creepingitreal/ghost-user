@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import PuzzleView from '../views/PuzzleView.vue'
 import FinalView from '../views/FinalView.vue'
-
 import { pinia } from '../plugins/pinia'
 import { useProgressStore } from '../stores/progressStore'
 
