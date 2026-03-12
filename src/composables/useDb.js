@@ -32,3 +32,35 @@ export function useDb() {
         }
     }
 }
+
+export async function computeExpected(exec, answerSpec) {
+    if (!answerSpec) return null
+
+    const res = await exec(answerSpec.sql)
+    const r0 = res?.[0]
+    const rows = r0?.values ?? []
+    if (rows.length === 0) return null
+
+    // Column selector: name or index
+    let idx = 0
+    if (typeof answerSpec.column === 'number') {
+        idx = answerSpec.column
+    } else if (typeof answerSpec.column === 'string') {
+        idx = r0.columns.indexOf(answerSpec.column)
+        if (idx < 0) idx = 0
+    }
+
+    switch (answerSpec.mode) {
+        case 'sql-single':
+            return rows[0][idx]
+
+        case 'sql-one-of':
+            return rows.map(row => row[idx]).filter(v => v !== null && v !== undefined)
+
+        case 'sql-count':
+            return rows.length
+
+        default:
+            return rows[0][idx]
+    }
+}

@@ -1,0 +1,1496 @@
+Index: src/views/PuzzleView.vue
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/views/PuzzleView.vue b/src/views/PuzzleView.vue
+--- a/src/views/PuzzleView.vue
++++ b/src/views/PuzzleView.vue	(date 1773357916062)
+@@ -1,201 +1,214 @@
++<!-- PuzzleView.vue -->
+ <template>
+   <div class="terminal">
+ 
+-    <!-- Nav -->
+-    <div class="pz-nav">
+-      <button class="btn small secondary" @click="router.push({ name: 'home' })">
+-        ← Briefing
++    <!-- Navigation Bar -->
++    <div class="puzzle-nav">
++      <button class="btn secondary small" @click="router.push({ name: 'home' })">
++        ← Back to Briefing
+       </button>
+-      <div class="pz-nav-right">
+-        <span class="pz-mode-badge" :class="mode">
+-          {{ mode === 'basic' ? '▶ Basic' : '⚡ Advanced' }}
++      <div class="puzzle-nav-right">
++        <span class="mode-badge" :class="mode">
++          {{ mode === 'basic' ? '▶ Basic Investigation' : '⚡ Advanced Investigation' }}
+         </span>
+-        <span class="pz-counter">Task {{ currentIndex + 1 }} / {{ totalPuzzles }}</span>
++        <span class="puzzle-counter">Task {{ currentIndex + 1 }} / {{ totalPuzzles }}</span>
+       </div>
+     </div>
+ 
+-    <!-- Progress -->
+-    <div class="pz-progress-wrap">
+-      <div class="pz-progress-bar">
+-        <div
+-            class="pz-progress-fill"
+-            :style="{ width: `${(solvedIds.length / totalPuzzles) * 100}%` }"
+-        />
+-      </div>
+-      <div class="pz-nodes">
++    <!-- Progress Bar -->
++    <div class="progress-bar">
++      <div
++          class="progress-fill"
++          :style="{ width: `${((currentIndex) / totalPuzzles) * 100}%` }"
++          :class="{ complete: isLastPuzzle && feedback?.correct }"
++      />
++      <div class="progress-nodes">
+         <div
+             v-for="(p, i) in puzzles"
+             :key="p.id"
+-            class="pz-node"
++            class="progress-node"
+             :class="{
+-            done:   solvedIds.includes(p.id),
++            done: solvedIds.includes(p.id),
+             active: i === currentIndex,
+             locked: i > currentIndex && !solvedIds.includes(p.id)
+           }"
+             @click="navigateTo(i)"
+             :title="`Task ${i + 1}${solvedIds.includes(p.id) ? ' ✓' : ''}`"
+         >
+-          <span>{{ solvedIds.includes(p.id) ? '✓' : i + 1 }}</span>
++          <span v-if="solvedIds.includes(p.id)">✓</span>
++          <span v-else>{{ i + 1 }}</span>
+         </div>
+       </div>
+     </div>
+ 
+     <!-- Acquired Clues -->
+-    <div v-if="acquiredClues.length" class="pz-clues-strip">
+-      <span class="pz-clues-label">CLUES:</span>
+-      <span v-for="clue in acquiredClues" :key="clue" class="pz-clue-chip">
+-        {{ clue }}
+-      </span>
++    <div v-if="acquiredClues.length" class="clues-strip">
++      <span class="clues-label">CLUES ACQUIRED:</span>
++      <span
++          v-for="clue in acquiredClues"
++          :key="clue"
++          class="clue-chip"
++      >{{ clue }}</span>
+       <span
+           v-for="i in (totalPuzzles - acquiredClues.length)"
+-          :key="'e'+i"
+-          class="pz-clue-chip empty"
++          :key="'empty-' + i"
++          class="clue-chip empty"
+       >???</span>
+     </div>
+ 
+     <!-- Story Panel -->
+-    <div class="pz-story">
+-      <div class="pz-story-header" @click="storyCollapsed = !storyCollapsed">
+-        <span class="pz-story-toggle">{{ storyCollapsed ? '▶' : '▼' }}</span>
+-        <span class="pz-story-title">Mission Briefing — Task {{ currentIndex + 1 }}</span>
+-        <span class="pz-story-hint">{{ storyCollapsed ? 'expand' : 'collapse' }}</span>
++    <div class="story-panel" :class="{ 'story-collapsed': storyCollapsed }">
++      <div class="story-header" @click="storyCollapsed = !storyCollapsed">
++        <span class="story-toggle-icon">{{ storyCollapsed ? '▶' : '▼' }}</span>
++        <span class="story-title">Mission Briefing — Task {{ currentIndex + 1 }}</span>
++        <span class="story-toggle-hint">{{ storyCollapsed ? 'expand' : 'collapse' }}</span>
+       </div>
+-      <transition name="pz-slide">
+-        <div v-if="!storyCollapsed" class="pz-story-body">
+-          <pre class="pz-story-text">{{ puzzle.story }}</pre>
++      <transition name="story-slide">
++        <div v-if="!storyCollapsed" class="story-body">
++          <pre class="story-text">{{ puzzle.story }}</pre>
+         </div>
+       </transition>
+     </div>
+ 
+-    <!-- Helper Buttons Row -->
+-    <div class="pz-helpers">
+-      <button class="btn small secondary" @click="showSchema = !showSchema">
+-        {{ showSchema ? '▼ Hide Schema' : '▶ Show Schema' }}
++    <!-- Schema Helper -->
++    <div class="schema-hint">
++      <button class="btn secondary small" @click="showSchema = !showSchema">
++        {{ showSchema ? '▼ Hide' : '▶ Show' }} Database Schema
+       </button>
+-      <button class="btn small danger" @click="showSolution = !showSolution">
+-        {{ showSolution ? '▼ Hide Solution' : '💡 Show Solution' }}
+-      </button>
+-    </div>
+-
+-    <!-- Schema Dropdown -->
+-    <transition name="pz-fade">
+-      <div v-if="showSchema" class="pz-schema-box">
+-        <p>Click a query to insert it into the editor:</p>
+-        <div class="pz-schema-chips">
+-          <code
+-              v-for="q in schemaQueries"
+-              :key="q"
+-              class="pz-schema-chip"
+-              @click="injectQuery(q)"
+-          >{{ q }}</code>
+-        </div>
+-      </div>
+-    </transition>
+-
+-    <!-- Solution Dropdown -->
+-    <transition name="pz-fade">
+-      <div v-if="showSolution" class="pz-solution-box">
+-        <div class="pz-solution-header">
+-          <span>⚠ SOLUTION — only use if stuck</span>
+-        </div>
+-        <pre class="pz-solution-text">{{ puzzle.solution }}</pre>
+-      </div>
+-    </transition>
++      <transition name="fade">
++        <div v-if="showSchema" class="schema-output">
++          <p>Explore the database structure with these queries:</p>
++          <div class="schema-queries">
++            <code
++                v-for="q in schemaQueries"
++                :key="q"
++                class="schema-query-chip"
++                @click="injectQuery(q)"
++                title="Click to insert"
++            >{{ q }}</code>
++          </div>
++          <p class="schema-hint-note">↑ Click any query to insert it into the editor</p>
++        </div>
++      </transition>
++    </div>
+ 
+     <!-- SQL Editor -->
+-    <div class="pz-editor">
+-      <label class="pz-prompt-label">{{ puzzle.prompt }}</label>
+-      <textarea
+-          v-model="sqlInput"
+-          class="pz-sql-input"
+-          rows="7"
+-          placeholder="Write your SQL query here..."
+-          spellcheck="false"
+-          @keydown.ctrl.enter.prevent="runQuery"
+-          @keydown.meta.enter.prevent="runQuery"
+-      />
+-      <div class="pz-editor-footer">
+-        <span class="pz-editor-hint">Ctrl + Enter to run</span>
+-        <div class="pz-editor-actions">
+-          <button class="btn small secondary" @click="clearEditor" :disabled="!sqlInput">
+-            ✕ Clear
+-          </button>
+-          <button class="btn small" @click="runQuery" :disabled="running || !sqlInput.trim()">
+-            <span v-if="running" class="pz-spin">⟳</span>
+-            {{ running ? 'Running…' : '▶ Run Query' }}
+-          </button>
++    <div class="editor-panel">
++      <label class="prompt-label">
++        <span class="prompt-icon">🔍</span>
++        {{ puzzle.prompt }}
++      </label>
++      <div class="editor-wrapper">
++        <textarea
++            v-model="sqlInput"
++            class="sql-editor"
++            rows="8"
++            placeholder="Write your SQL query here...&#10;&#10;e.g. SELECT * FROM users LIMIT 10;"
++            spellcheck="false"
++            @keydown.ctrl.enter="runQuery"
++            @keydown.meta.enter="runQuery"
++        />
++        <div class="editor-footer">
++          <span class="editor-hint">Ctrl+Enter to run</span>
++          <div class="editor-actions">
++            <button
++                class="btn secondary small"
++                @click="clearEditor"
++                :disabled="!sqlInput"
++            >✕ Clear</button>
++            <button
++                class="btn"
++                @click="runQuery"
++                :disabled="running || !sqlInput.trim()"
++            >
++              <span v-if="running" class="spinner">⟳</span>
++              {{ running ? 'Running...' : '▶ Run Query' }}
++            </button>
++          </div>
+         </div>
+       </div>
+     </div>
+ 
+-    <!-- Results -->
+-    <transition name="pz-fade">
+-      <div v-if="queryResult !== null" class="pz-results">
+-        <div class="pz-results-header">
+-          <span>Query Results</span>
+-          <span class="pz-row-count">{{ resultRowCount }} row{{ resultRowCount !== 1 ? 's' : '' }}</span>
++    <!-- Query Results -->
++    <transition name="fade">
++      <div v-if="queryResult !== null" class="result-panel">
++        <div class="result-header">
++          <span class="result-label">Query Results</span>
++          <span class="result-count">
++            {{ resultRowCount }} row{{ resultRowCount !== 1 ? 's' : '' }} returned
++          </span>
+         </div>
+         <ResultsTable :result="queryResult" />
+       </div>
+     </transition>
+ 
+-    <!-- Error -->
+-    <transition name="pz-fade">
+-      <div v-if="queryError" class="pz-error error">
+-        <span>⚠ {{ queryError }}</span>
++    <!-- Error Display -->
++    <transition name="fade">
++      <div v-if="queryError" class="error-panel">
++        <span class="error-icon">⚠</span>
++        <div class="error-content">
++          <strong>Query Error</strong>
++          <span>{{ queryError }}</span>
++        </div>
+       </div>
+     </transition>
+ 
+-    <!-- Answer Panel — only shown once a query has been run -->
+-    <transition name="pz-fade">
+-      <div v-if="queryResult !== null || queryError" class="pz-answer">
+-        <label class="pz-answer-label">
+-          Enter your answer based on the query results:
++    <!-- Answer Input -->
++    <transition name="fade">
++      <div v-if="queryResult !== null || queryError" class="answer-panel">
++        <label class="answer-label">
++          <span class="answer-icon">📋</span>
++          Based on your results, enter your answer:
+         </label>
+-        <div class="pz-answer-row">
++        <div class="answer-row">
+           <input
+               v-model="userAnswer"
++              class="answer-input"
+               type="text"
+-              placeholder="Type your answer…"
++              placeholder="Type your answer here..."
+               @keyup.enter="submitAnswer"
+               :disabled="feedback?.correct"
+           />
+           <button
+-              class="btn"
++              class="btn success"
+               @click="submitAnswer"
+               :disabled="!userAnswer.trim() || feedback?.correct"
+           >
+             ✓ Submit
+           </button>
+         </div>
+-        <p v-if="attemptCount > 1 && !feedback?.correct" class="pz-attempts">
+-          Attempt {{ attemptCount }} — re-examine your results.
++        <p v-if="attemptCount > 1 && !feedback?.correct" class="attempt-count">
++          Attempt {{ attemptCount }} — keep digging.
+         </p>
+       </div>
+     </transition>
+ 
+     <!-- Feedback -->
+-    <transition name="pz-pop">
+-      <div v-if="feedback" class="pz-feedback" :class="feedback.correct ? 'correct' : 'wrong'">
+-
+-        <!-- Correct -->
++    <transition name="feedback-pop">
++      <div
++          v-if="feedback"
++          :class="['feedback-panel', feedback.correct ? 'correct' : 'wrong']"
++      >
+         <template v-if="feedback.correct">
+-          <div class="pz-clue-reveal">
+-            <span class="pz-clue-reveal-label">▮ CLUE FRAGMENT ACQUIRED</span>
+-            <div class="pz-clue-word">{{ puzzle.clue }}</div>
++          <div class="clue-reveal">
++            <div class="clue-reveal-header">
++              <span class="clue-unlocked-label">▮ CLUE FRAGMENT ACQUIRED</span>
++            </div>
++            <div class="clue-word-wrapper">
++              <span class="clue-word">{{ puzzle.clue }}</span>
++            </div>
+           </div>
+-          <p class="pz-feedback-msg">{{ feedback.message }}</p>
+-          <button class="btn" @click="nextPuzzle">
+-            {{ isLastPuzzle ? '🏁 Complete Investigation' : '▶ Next Task →' }}
++          <p class="feedback-message success-message">{{ feedback.message }}</p>
++          <button class="btn large" @click="nextPuzzle">
++            {{ isLastPuzzle ? '🏁 Complete Investigation' : '▶ Continue Investigation →' }}
+           </button>
+         </template>
+-
+-        <!-- Wrong -->
+         <template v-else>
+-          <span class="error">✗</span>
+-          <p class="pz-feedback-msg">{{ feedback.message }}</p>
++          <div class="feedback-wrong-inner">
++            <span class="feedback-wrong-icon">✗</span>
++            <p>{{ feedback.message }}</p>
++          </div>
+         </template>
+-
+       </div>
+     </transition>
+ 
+@@ -204,26 +217,25 @@
+ 
+ <script setup>
+ import ResultsTable from '../components/ResultsTable.vue'
+-import { ref, computed, watch } from 'vue'
++import { ref, computed, watch, onMounted } from 'vue'
+ import { useDb } from '../composables/useDb'
+ import { useRouter, useRoute } from 'vue-router'
+ import { basicPuzzles } from '../validators/basic'
+ import { advancedPuzzles } from '../validators/advanced'
+ 
+-const db        = useDb()
+-const router    = useRouter()
+-const route     = useRoute()
++const db = useDb()
++const router = useRouter()
++const route = useRoute()
+ 
+-const mode      = route.params.mode
+-const puzzles   = mode === 'basic' ? basicPuzzles : advancedPuzzles
++const mode = route.params.mode
++const puzzles = mode === 'basic' ? basicPuzzles : advancedPuzzles
+ const currentId = parseInt(route.params.id)
+-
+-const currentIndex  = computed(() => puzzles.findIndex(p => p.id === currentId))
+-const puzzle        = computed(() => puzzles[currentIndex.value])
+-const isLastPuzzle  = computed(() => currentIndex.value === puzzles.length - 1)
+-const totalPuzzles  = puzzles.length
+-const progressKey   = `ghost-${mode}-progress`
+-
++const currentIndex = computed(() => puzzles.findIndex(p => p.id === currentId))
++const puzzle = computed(() => puzzles[currentIndex.value])
++const isLastPuzzle = computed(() => currentIndex.value === puzzles.length - 1)
++const totalPuzzles = puzzles.length
++
++const progressKey = `ghost-${mode}-progress`
+ const savedProgress = ref(JSON.parse(localStorage.getItem(progressKey) || '{}'))
+ 
+ const solvedIds = computed(() =>
+@@ -233,20 +245,20 @@
+ )
+ 
+ const acquiredClues = computed(() =>
+-    puzzles.filter(p => solvedIds.value.includes(p.id)).map(p => p.clue)
++    puzzles
++        .filter(p => solvedIds.value.includes(p.id))
++        .map(p => p.clue)
+ )
+ 
+-// State
+-const sqlInput      = ref('')
+-const userAnswer    = ref('')
+-const queryResult   = ref(null)
+-const queryError    = ref(null)
+-const feedback      = ref(null)
+-const running       = ref(false)
+-const showSchema    = ref(false)
+-const showSolution  = ref(false)
++const sqlInput = ref('')
++const userAnswer = ref('')
++const queryResult = ref(null)
++const queryError = ref(null)
++const feedback = ref(null)
++const running = ref(false)
++const showSchema = ref(false)
+ const storyCollapsed = ref(false)
+-const attemptCount  = ref(0)
++const attemptCount = ref(0)
+ 
+ const schemaQueries = [
+   "SELECT name FROM sqlite_master WHERE type='table';",
+@@ -258,40 +270,46 @@
+   'SELECT * FROM audit_logs LIMIT 5;',
+ ]
+ 
+-const resultRowCount = computed(() =>
+-    queryResult.value?.[0]?.values?.length ?? 0
+-)
++const resultRowCount = computed(() => {
++  if (!queryResult.value || !queryResult.value[0]) return 0
++  return queryResult.value[0].values?.length || 0
++})
+ 
+-// Reset everything when route changes
++// Reset state when navigating to a new puzzle
+ watch(() => route.params.id, () => {
+-  sqlInput.value      = ''
+-  userAnswer.value    = ''
+-  queryResult.value   = null
+-  queryError.value    = null
+-  feedback.value      = null
+-  attemptCount.value  = 0
++  sqlInput.value = ''
++  userAnswer.value = ''
++  queryResult.value = null
++  queryError.value = null
++  feedback.value = null
++  attemptCount.value = 0
+   storyCollapsed.value = false
+-  showSchema.value    = false
+-  showSolution.value  = false
++  showSchema.value = false
+   savedProgress.value = JSON.parse(localStorage.getItem(progressKey) || '{}')
+ })
+ 
+-// Auto-collapse story on solve
+-watch(feedback, val => {
++// Auto-collapse story after solving
++watch(feedback, (val) => {
+   if (val?.correct) storyCollapsed.value = true
+ })
+ 
+-// ── Actions ──────────────────────────────────────────────
++onMounted(() => {
++  // If this puzzle was already solved, mark it
++  if (solvedIds.value.includes(currentId)) {
++    // Allow re-doing but show progress
++  }
++})
+ 
+ async function runQuery() {
+   if (!sqlInput.value.trim() || running.value) return
+-  running.value     = true
++  running.value = true
+   queryResult.value = null
+-  queryError.value  = null
+-  feedback.value    = null
++  queryError.value = null
++  feedback.value = null
+ 
+   try {
+-    queryResult.value = await db.exec(sqlInput.value)
++    const result = await db.exec(sqlInput.value)
++    queryResult.value = result
+   } catch (e) {
+     queryError.value = e.message
+   } finally {
+@@ -315,11 +333,16 @@
+     localStorage.setItem(progressKey, JSON.stringify(progress))
+     savedProgress.value = progress
+ 
+-    feedback.value = { correct: true, message: getSuccessMessage(currentIndex.value) }
++    feedback.value = {
++      correct: true,
++      message: getSuccessMessage(currentIndex.value)
++    }
+   } else {
+     feedback.value = {
+       correct: false,
+-      message: typeof validation === 'string' ? validation : 'Incorrect. Re-examine your results.'
++      message: typeof validation === 'string'
++          ? validation
++          : 'Incorrect. Re-examine your query results.'
+     }
+   }
+ }
+@@ -328,543 +351,688 @@
+   if (isLastPuzzle.value) {
+     router.push({ name: 'complete', params: { mode } })
+   } else {
+-    router.push({ name: 'puzzle', params: { mode, id: puzzles[currentIndex.value + 1].id } })
++    const next = puzzles[currentIndex.value + 1]
++    router.push({ name: 'puzzle', params: { mode, id: next.id } })
+   }
+ }
+ 
+ function navigateTo(index) {
++  // Allow navigation to solved puzzles or current
+   const target = puzzles[index]
+   if (solvedIds.value.includes(target.id) || index <= currentIndex.value) {
+     router.push({ name: 'puzzle', params: { mode, id: target.id } })
+   }
+ }
+ 
+-function injectQuery(q) {
+-  sqlInput.value  = q
++function injectQuery(query) {
++  sqlInput.value = query
+   showSchema.value = false
+ }
+ 
+ function clearEditor() {
+-  sqlInput.value    = ''
++  sqlInput.value = ''
+   queryResult.value = null
+-  queryError.value  = null
+-  feedback.value    = null
++  queryError.value = null
++  feedback.value = null
+ }
+ 
+ function getSuccessMessage(idx) {
+-  const msgs = [
++  const messages = [
+     'Solid. The picture is beginning to form.',
+     'Good work, Analyst. Another piece falls into place.',
+     "Confirmed. The data doesn't lie — even when someone tries to make it.",
+     "Excellent. The Ghost User's trail grows clearer.",
+-    "Outstanding. You're thinking like an investigator now.",
++    'Outstanding. You\'re thinking like an investigator now.',
+     'Remarkable. Most analysts miss that.',
+     'The net is tightening.',
+     'Every query brings us closer.',
+     'Almost there. One final step.',
+     'Case closed. The Ghost User has been unmasked.'
+   ]
+-  return msgs[idx] ?? 'Confirmed.'
++  return messages[idx] || 'Confirmed.'
+ }
+ </script>
+ 
+ <style scoped>
+-/* ── All styles here are puzzle-specific only.
+-   Global base (btn, textarea, input, .terminal, etc.)
+-   comes from style.css                              ── */
+-
+-/* Nav */
+-.pz-nav {
++/* ── Nav ── */
++.puzzle-nav {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+-  padding-bottom: 10px;
+-  border-bottom: 1px solid var(--green);
+-  margin-bottom: 4px;
++  margin-bottom: 16px;
++  padding-bottom: 12px;
++  border-bottom: 1px solid var(--border);
+ }
+ 
+-.pz-nav-right {
++.puzzle-nav-right {
+   display: flex;
+   align-items: center;
+   gap: 12px;
+ }
+ 
+-.pz-mode-badge {
+-  font-size: 0.72rem;
+-  padding: 3px 8px;
+-  border: 1px solid var(--green);
++.mode-badge {
++  font-size: 0.75rem;
++  padding: 3px 10px;
++  border-radius: 3px;
++  font-family: var(--font-mono);
++  letter-spacing: 0.05em;
++  font-weight: 600;
++}
++
++.mode-badge.basic {
++  background: rgba(0, 255, 136, 0.1);
+   color: var(--green);
+-  letter-spacing: 0.05em;
++  border: 1px solid var(--green);
+ }
+ 
+-.pz-mode-badge.advanced {
+-  border-color: var(--warning);
+-  color: var(--warning);
++.mode-badge.advanced {
++  background: rgba(255, 170, 0, 0.1);
++  color: #ffaa00;
++  border: 1px solid #ffaa00;
+ }
+ 
+-.pz-counter {
++.puzzle-counter {
+   font-size: 0.75rem;
+-  color: var(--green-dim);
+-  opacity: 0.7;
++  color: var(--muted);
++  font-family: var(--font-mono);
+ }
+ 
+-/* Progress */
+-.pz-progress-wrap {
++/* ── Progress Bar ── */
++.progress-bar {
+   position: relative;
+-  margin-bottom: 16px;
+-  padding-bottom: 18px;
+-}
+-
+-.pz-progress-bar {
+-  height: 3px;
+-  background: rgba(51,255,51,0.15);
+-  margin-bottom: 10px;
++  height: 4px;
++  background: var(--border);
++  border-radius: 2px;
++  margin-bottom: 24px;
++  overflow: visible;
+ }
+ 
+-.pz-progress-fill {
++.progress-fill {
+   height: 100%;
+   background: var(--green);
+-  transition: width 0.4s ease;
++  border-radius: 2px;
++  transition: width 0.5s ease;
++}
++
++.progress-fill.complete {
++  background: #00ffff;
+ }
+ 
+-.pz-nodes {
+-  display: flex;
+-  justify-content: space-between;
++.progress-nodes {
+   position: absolute;
+-  bottom: 0;
++  top: 50%;
+   left: 0;
+   right: 0;
++  transform: translateY(-50%);
++  display: flex;
++  justify-content: space-between;
++  padding: 0 2px;
+ }
+ 
+-.pz-node {
++.progress-node {
+   width: 22px;
+   height: 22px;
+-  border: 1px solid rgba(51,255,51,0.3);
++  border-radius: 50%;
++  background: var(--bg);
++  border: 2px solid var(--border);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-size: 0.65rem;
++  font-family: var(--font-mono);
+   cursor: pointer;
+-  color: rgba(51,255,51,0.4);
+-  background: #000;
++  transition: all 0.2s;
++  color: var(--muted);
+   user-select: none;
+-  transition: all 0.15s;
+ }
+ 
+-.pz-node.done {
++.progress-node.done {
+   border-color: var(--green);
+   color: var(--green);
+-  background: rgba(51,255,51,0.08);
++  background: rgba(0, 255, 136, 0.1);
+ }
+ 
+-.pz-node.active {
++.progress-node.active {
+   border-color: var(--green);
+   color: var(--green);
+-  box-shadow: 0 0 6px rgba(51,255,51,0.4);
++  box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
++  background: var(--bg);
+ }
+ 
+-.pz-node.locked {
++.progress-node.locked {
+   cursor: default;
+-  opacity: 0.3;
++  opacity: 0.4;
+ }
+ 
+-/* Clues strip */
+-.pz-clues-strip {
++/* ── Clues Strip ── */
++.clues-strip {
+   display: flex;
+   align-items: center;
+   flex-wrap: wrap;
+-  gap: 6px;
+-  padding: 8px 12px;
+-  border: 1px solid rgba(51,255,51,0.2);
++  gap: 8px;
++  padding: 10px 14px;
++  background: rgba(0, 255, 136, 0.03);
++  border: 1px solid rgba(0, 255, 136, 0.15);
++  border-radius: 4px;
++  margin-bottom: 20px;
++  font-family: var(--font-mono);
+   font-size: 0.75rem;
+ }
+ 
+-.pz-clues-label {
+-  color: var(--green-dim);
+-  opacity: 0.6;
++.clues-label {
++  color: var(--muted);
+   margin-right: 4px;
+ }
+ 
+-.pz-clue-chip {
+-  padding: 1px 8px;
++.clue-chip {
++  padding: 2px 10px;
++  background: rgba(0, 255, 136, 0.12);
+   border: 1px solid var(--green);
++  border-radius: 3px;
+   color: var(--green);
+-  font-size: 0.7rem;
++  font-weight: 700;
+   letter-spacing: 0.1em;
+-  font-weight: 700;
++  font-size: 0.7rem;
+ }
+ 
+-.pz-clue-chip.empty {
+-  border-color: rgba(51,255,51,0.2);
+-  color: rgba(51,255,51,0.3);
++.clue-chip.empty {
++  background: rgba(255, 255, 255, 0.03);
++  border-color: var(--border);
++  color: var(--muted);
+   font-weight: 400;
++  letter-spacing: 0.05em;
+ }
+ 
+-/* Story */
+-.pz-story {
+-  border: 1px solid rgba(51,255,51,0.3);
++/* ── Story Panel ── */
++.story-panel {
++  max-height: 400px;
++  background: rgba(0, 255, 136, 0.02);
++  border: 1px solid var(--border);
+   border-left: 3px solid var(--green);
++  border-radius: 4px;
++  margin-bottom: 16px;
++  overflow-y: auto;
++  transition: all 0.2s;
+ }
+ 
+-.pz-story-header {
++.story-header {
+   display: flex;
+   align-items: center;
+-  gap: 8px;
+-  padding: 8px 14px;
++  gap: 10px;
++  padding: 10px 16px;
+   cursor: pointer;
+   user-select: none;
+ }
+ 
+-.pz-story-header:hover {
+-  background: rgba(51,255,51,0.04);
++.story-header:hover {
++  background: rgba(0, 255, 136, 0.04);
+ }
+ 
+-.pz-story-toggle {
++.story-toggle-icon {
+   color: var(--green);
+-  font-size: 0.7rem;
+-  width: 10px;
++  font-size: 0.75rem;
++  width: 12px;
+ }
+ 
+-.pz-story-title {
+-  font-size: 0.78rem;
++.story-title {
++  font-family: var(--font-mono);
++  font-size: 0.8rem;
+   color: var(--green);
++  font-weight: 600;
+   letter-spacing: 0.05em;
+   flex: 1;
+ }
+ 
+-.pz-story-hint {
+-  font-size: 0.68rem;
+-  color: var(--green-dim);
+-  opacity: 0.5;
++.story-toggle-hint {
++  font-size: 0.7rem;
++  color: var(--muted);
++  font-family: var(--font-mono);
+ }
+ 
+-.pz-story-body {
+-  border-top: 1px solid rgba(51,255,51,0.15);
+-  padding: 12px 14px;
++.story-body {
++  padding: 0 16px 16px;
++  border-top: 1px solid rgba(0, 255, 136, 0.1);
+ }
+ 
+-.pz-story-text {
++.story-text {
++  font-family: var(--font-mono);
+   font-size: 0.82rem;
+   line-height: 1.65;
+-  color: var(--green-dim);
++  color: var(--text);
+   white-space: pre-wrap;
+   word-break: break-word;
+-  margin: 0;
++  margin: 12px 0 0;
++}
++
++/* ── Schema Hint ── */
++.schema-hint {
++  margin-bottom: 16px;
++}
++
++.schema-output {
++  margin-top: 10px;
++  padding: 12px 16px;
++  background: rgba(0, 0, 0, 0.3);
++  border: 1px solid var(--border);
++  border-radius: 4px;
++  font-size: 0.8rem;
++  color: var(--muted);
+ }
+ 
+-/* Helpers row */
+-.pz-helpers {
++.schema-output p {
++  margin: 0 0 10px;
++}
++
++.schema-queries {
+   display: flex;
++  flex-wrap: wrap;
+   gap: 8px;
+-  flex-wrap: wrap;
+-}
+-
+-/* Schema box */
+-.pz-schema-box {
+-  border: 1px solid var(--warning);
+-  padding: 12px 14px;
+-  font-size: 0.78rem;
+-  color: var(--warning);
+-}
+-
+-.pz-schema-box p {
+-  margin: 0 0 8px;
+-  opacity: 0.8;
++  margin-bottom: 8px;
+ }
+ 
+-.pz-schema-chips {
+-  display: flex;
+-  flex-wrap: wrap;
+-  gap: 6px;
+-}
+-
+-.pz-schema-chip {
+-  padding: 3px 8px;
+-  border: 1px solid rgba(255,204,0,0.3);
+-  color: var(--warning);
++.schema-query-chip {
++  padding: 4px 10px;
++  background: rgba(0, 255, 136, 0.06);
++  border: 1px solid rgba(0, 255, 136, 0.2);
++  border-radius: 3px;
++  color: var(--green);
+   font-size: 0.72rem;
+   cursor: pointer;
+-  font-family: "Courier New", monospace;
++  font-family: var(--font-mono);
+   transition: background 0.15s;
+   user-select: none;
+ }
+ 
+-.pz-schema-chip:hover {
+-  background: rgba(255,204,0,0.08);
+-}
+-
+-/* Solution box */
+-.pz-solution-box {
+-  border: 1px solid var(--danger);
+-  font-size: 0.8rem;
++.schema-query-chip:hover {
++  background: rgba(0, 255, 136, 0.15);
+ }
+ 
+-.pz-solution-header {
+-  padding: 6px 14px;
+-  background: rgba(255,77,79,0.08);
+-  color: var(--danger);
+-  font-size: 0.72rem;
+-  border-bottom: 1px solid rgba(255,77,79,0.3);
++.schema-hint-note {
++  font-size: 0.7rem;
++  color: var(--muted);
++  margin: 4px 0 0;
++  font-style: italic;
+ }
+ 
+-.pz-solution-text {
+-  padding: 12px 14px;
+-  margin: 0;
+-  color: var(--green-dim);
+-  font-size: 0.82rem;
+-  line-height: 1.6;
+-  white-space: pre-wrap;
+-  opacity: 0.85;
++/* ── Editor ── */
++.editor-panel {
++  margin-bottom: 16px;
+ }
+ 
+-/* Editor */
+-.pz-editor {
++.prompt-label {
+   display: flex;
+-  flex-direction: column;
+-  gap: 0;
+-  border: 1px solid var(--green);
+-}
+-
+-.pz-prompt-label {
+-  display: block;
+-  padding: 8px 12px;
+-  font-size: 0.8rem;
+-  color: var(--green-dim);
+-  border-bottom: 1px solid rgba(51,255,51,0.2);
+-  background: rgba(51,255,51,0.03);
++  align-items: flex-start;
++  gap: 8px;
++  font-family: var(--font-mono);
++  font-size: 0.82rem;
++  color: var(--text);
++  margin-bottom: 10px;
+   line-height: 1.5;
+ }
+ 
+-/* Override global textarea for editor context */
+-.pz-sql-input {
+-  border: none !important;
+-  border-bottom: 1px solid rgba(51,255,51,0.2) !important;
+-  min-height: 140px;
+-  padding: 12px;
++.prompt-icon {
++  flex-shrink: 0;
++  margin-top: 1px;
++}
++
++.editor-wrapper {
++  border: 1px solid var(--border);
++  border-radius: 4px;
++  overflow: hidden;
++  transition: border-color 0.2s;
++}
++
++.editor-wrapper:focus-within {
++  border-color: var(--green);
++  box-shadow: 0 0 0 1px rgba(0, 255, 136, 0.2);
++}
++
++.sql-editor {
++  
++  width: 100%;
++  background: rgba(0, 0, 0, 0.4);
++  color: var(--green);
++  font-family: var(--font-mono);
++  font-size: 0.85rem;
++  padding: 14px 16px;
++  border: none;
++  outline: none;
+   resize: vertical;
++  min-height: 120px;
++  line-height: 1.6;
++  box-sizing: border-box;
++  display: block;
++}
++
++.sql-editor::placeholder {
++  color: rgba(0, 255, 136, 0.25);
+ }
+ 
+-.pz-editor-footer {
++.editor-footer {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+-  padding: 6px 10px;
+-  background: rgba(51,255,51,0.02);
++  padding: 8px 12px;
++  background: rgba(0, 0, 0, 0.2);
++  border-top: 1px solid var(--border);
+ }
+ 
+-.pz-editor-hint {
+-  font-size: 0.68rem;
+-  color: var(--green-dim);
+-  opacity: 0.5;
++.editor-hint {
++  font-size: 0.7rem;
++  color: var(--muted);
++  font-family: var(--font-mono);
+ }
+ 
+-.pz-editor-actions {
++.editor-actions {
+   display: flex;
+   gap: 8px;
+   align-items: center;
+ }
+ 
+-/* Spinner */
+-.pz-spin {
+-  display: inline-block;
+-  animation: pz-spin 0.8s linear infinite;
+-}
+-
+-@keyframes pz-spin {
+-  to { transform: rotate(360deg); }
+-}
+-
+-/* Results */
+-.pz-results {
+-  border: 1px solid rgba(51,255,51,0.3);
++/* ── Results ── */
++.result-panel {
++  margin-bottom: 16px;
++  border: 1px solid var(--border);
++  border-radius: 4px;
+   overflow: hidden;
+ }
+ 
+-.pz-results-header {
++.result-header {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+-  padding: 6px 12px;
++  padding: 8px 14px;
++  background: rgba(0, 0, 0, 0.2);
++  border-bottom: 1px solid var(--border);
++}
++
++.result-label {
++  font-family: var(--font-mono);
++  font-size: 0.75rem;
++  color: var(--muted);
++  text-transform: uppercase;
++  letter-spacing: 0.08em;
++}
++
++.result-count {
++  font-family: var(--font-mono);
+   font-size: 0.72rem;
+-  color: var(--green-dim);
+-  opacity: 0.7;
+-  border-bottom: 1px solid rgba(51,255,51,0.2);
+-  background: rgba(51,255,51,0.02);
+-}
+-
+-.pz-row-count {
+   color: var(--green);
+-  opacity: 0.8;
+ }
+ 
+-/* Error */
+-.pz-error {
+-  padding: 10px 14px;
+-  border: 1px solid var(--danger);
++/* ── Error ── */
++.error-panel {
++  display: flex;
++  align-items: flex-start;
++  gap: 12px;
++  padding: 12px 16px;
++  background: rgba(255, 50, 50, 0.08);
++  border: 1px solid rgba(255, 50, 50, 0.3);
++  border-radius: 4px;
++  margin-bottom: 16px;
++  font-family: var(--font-mono);
+   font-size: 0.82rem;
+-  background: rgba(255,77,79,0.05);
++}
++
++.error-icon {
++  color: #ff4444;
++  flex-shrink: 0;
++  font-size: 1rem;
++}
++
++.error-content {
++  display: flex;
++  flex-direction: column;
++  gap: 4px;
+ }
+ 
+-/* Answer */
+-.pz-answer {
+-  border: 1px solid rgba(51,255,51,0.3);
+-  padding: 14px;
++.error-content strong {
++  color: #ff6666;
+ }
+ 
+-.pz-answer-label {
+-  display: block;
++.error-content span {
++  color: var(--muted);
+   font-size: 0.78rem;
+-  color: var(--green-dim);
++}
++
++/* ── Answer Panel ── */
++.answer-panel {
++  padding: 16px;
++  background: rgba(0, 0, 0, 0.2);
++  border: 1px solid var(--border);
++  border-radius: 4px;
++  margin-bottom: 16px;
++}
++
++.answer-label {
++  display: flex;
++  align-items: center;
++  gap: 8px;
++  font-family: var(--font-mono);
++  font-size: 0.8rem;
++  color: var(--muted);
+   margin-bottom: 10px;
+-  opacity: 0.8;
+ }
+ 
+-.pz-answer-row {
++.answer-row {
+   display: flex;
+-  gap: 8px;
++  gap: 10px;
+   align-items: center;
+ }
+ 
+-/* Stretch the text input to fill available space */
+-.pz-answer-row input {
++.answer-input {
+   flex: 1;
++  background: rgba(0, 0, 0, 0.4);
++  border: 1px solid var(--border);
++  color: var(--text);
++  font-family: var(--font-mono);
++  font-size: 0.85rem;
++  padding: 9px 14px;
++  border-radius: 3px;
++  outline: none;
++  transition: border-color 0.2s;
++}
++
++.answer-input:focus {
++  border-color: var(--green);
++}
++
++.answer-input:disabled {
++  opacity: 0.5;
++  cursor: not-allowed;
+ }
+ 
+-.pz-attempts {
++.attempt-count {
+   margin: 8px 0 0;
++  font-size: 0.72rem;
++  color: var(--muted);
++  font-family: var(--font-mono);
++  font-style: italic;
++}
++
++/* ── Feedback ── */
++.feedback-panel {
++  padding: 16px 20px;
++  border-radius: 4px;
++  margin-bottom: 16px;
++  font-family: var(--font-mono);
++}
++
++.feedback-panel.correct {
++  background: rgba(0, 255, 136, 0.06);
++  border: 1px solid rgba(0, 255, 136, 0.4);
++}
++
++.feedback-panel.wrong {
++  background: rgba(255, 80, 80, 0.06);
++  border: 1px solid rgba(255, 80, 80, 0.3);
++}
++
++.clue-reveal {
++  margin-bottom: 14px;
++}
++
++.clue-reveal-header {
++  margin-bottom: 10px;
++}
++
++.clue-unlocked-label {
+   font-size: 0.7rem;
+-  color: var(--warning);
+-  opacity: 0.8;
+-}
+-
+-/* Feedback */
+-.pz-feedback {
+-  padding: 14px 16px;
+-  font-size: 0.82rem;
+-  line-height: 1.5;
+-}
+-
+-.pz-feedback.correct {
+-  border: 1px solid var(--green);
+-  background: rgba(51,255,51,0.04);
+-}
+-
+-.pz-feedback.wrong {
+-  border: 1px solid var(--danger);
+-  background: rgba(255,77,79,0.04);
+-  display: flex;
+-  align-items: flex-start;
+-  gap: 10px;
+-}
+-
+-.pz-feedback.wrong .pz-feedback-msg {
+-  margin: 0;
+-  color: var(--green-dim);
+-}
+-
+-.pz-clue-reveal {
+-  margin-bottom: 12px;
+-}
+-
+-.pz-clue-reveal-label {
+-  display: block;
+-  font-size: 0.68rem;
+-  color: var(--green-dim);
++  color: var(--muted);
+   letter-spacing: 0.12em;
+-  opacity: 0.7;
+-  margin-bottom: 8px;
++  text-transform: uppercase;
+ }
+ 
+-.pz-clue-word {
++.clue-word-wrapper {
+   display: inline-block;
++  padding: 6px 20px;
++  background: rgba(0, 255, 136, 0.1);
++  border: 1px solid var(--green);
++  border-radius: 3px;
++}
++
++.clue-word {
+   font-size: 1.4rem;
+   font-weight: 700;
+   color: var(--green);
+   letter-spacing: 0.2em;
+-  text-shadow: 0 0 10px rgba(51,255,51,0.5);
++  text-shadow: 0 0 12px rgba(0, 255, 136, 0.6);
++}
++
++.feedback-message {
++  font-size: 0.82rem;
++  color: var(--muted);
++  margin: 0 0 16px;
++  line-height: 1.5;
++}
++
++.success-message {
++  color: var(--text);
++}
++
++.feedback-wrong-inner {
++  display: flex;
++  align-items: flex-start;
++  gap: 12px;
++  color: #ff6666;
++  font-size: 0.82rem;
++}
++
++.feedback-wrong-inner p {
++  margin: 0;
++  color: var(--text);
++  line-height: 1.5;
++}
++
++.feedback-wrong-icon {
++  color: #ff4444;
++  font-size: 1rem;
++  flex-shrink: 0;
++  margin-top: 1px;
++}
++
++/* ── Buttons ── */
++.btn {
++  display: inline-flex;
++  align-items: center;
++  gap: 6px;
++  padding: 8px 16px;
++  background: transparent;
+   border: 1px solid var(--green);
+-  padding: 4px 16px;
++  color: var(--green);
++  font-family: var(--font-mono);
++  font-size: 0.82rem;
++  cursor: pointer;
++  border-radius: 3px;
++  transition: all 0.15s;
++  white-space: nowrap;
+ }
+ 
+-.pz-feedback-msg {
+-  color: var(--green-dim);
+-  margin: 0 0 12px;
++.btn:hover:not(:disabled) {
++  background: rgba(0, 255, 136, 0.1);
++  box-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
+ }
+ 
+-/* Light theme overrides for puzzle-specific elements */
+-body.light .pz-story {
+-  border-left-color: #0e4d0e;
++.btn:disabled {
++  opacity: 0.4;
++  cursor: not-allowed;
+ }
+ 
+-body.light .pz-story-text,
+-body.light .pz-story-title,
+-body.light .pz-story-toggle,
+-body.light .pz-prompt-label,
+-body.light .pz-answer-label,
+-body.light .pz-solution-text,
+-body.light .pz-clues-label {
+-  color: #0a0a0a;
++.btn.secondary {
++  border-color: var(--border);
++  color: var(--muted);
+ }
+ 
+-body.light .pz-clue-chip {
+-  border-color: #0e4d0e;
+-  color: #0e4d0e;
++.btn.secondary:hover:not(:disabled) {
++  border-color: var(--muted);
++  background: rgba(255, 255, 255, 0.04);
++  box-shadow: none;
+ }
+ 
+-body.light .pz-node.done,
+-body.light .pz-node.active {
+-  border-color: #0e4d0e;
+-  color: #0e4d0e;
++.btn.small {
++  padding: 5px 10px;
++  font-size: 0.75rem;
+ }
+ 
+-body.light .pz-clue-word {
+-  color: #0e4d0e;
+-  border-color: #0e4d0e;
+-  text-shadow: none;
++.btn.success {
++  border-color: var(--green);
++  color: var(--green);
+ }
+ 
+-body.light .pz-feedback.correct {
+-  border-color: #0e4d0e;
+-  background: rgba(14,77,14,0.05);
++.btn.large {
++  padding: 10px 22px;
++  font-size: 0.88rem;
+ }
+ 
+-body.light .pz-schema-box,
+-body.light .pz-schema-chip {
+-  border-color: var(--warning);
+-  color: var(--warning);
++.spinner {
++  display: inline-block;
++  animation: spin 1s linear infinite;
+ }
+ 
+-body.light .pz-solution-box {
+-  border-color: var(--danger);
++@keyframes spin {
++  to { transform: rotate(360deg); }
+ }
+ 
+ /* ── Transitions ── */
+-.pz-fade-enter-active,
+-.pz-fade-leave-active {
++.fade-enter-active,
++.fade-leave-active {
+   transition: opacity 0.2s ease;
+ }
+-.pz-fade-enter-from,
+-.pz-fade-leave-to {
++
++.fade-enter-from,
++.fade-leave-to {
+   opacity: 0;
+ }
+ 
+-.pz-slide-enter-active,
+-.pz-slide-leave-active {
+-  transition: opacity 0.2s ease, max-height 0.25s ease;
++.story-slide-enter-active,
++.story-slide-leave-active {
++  transition: all 0.25s ease;
+   overflow: hidden;
+-  max-height: 600px;
+ }
+-.pz-slide-enter-from,
+-.pz-slide-leave-to {
++
++.story-slide-enter-from,
++.story-slide-leave-to {
+   opacity: 0;
+   max-height: 0;
+ }
+ 
+-.pz-pop-enter-active {
+-  transition: opacity 0.25s ease, transform 0.25s ease;
++.story-slide-enter-to,
++.story-slide-leave-from {
++  opacity: 1;
++  max-height: 600px;
+ }
+-.pz-pop-enter-from {
++
++.feedback-pop-enter-active {
++  transition: all 0.3s ease;
++}
++
++.feedback-pop-enter-from {
+   opacity: 0;
+-  transform: translateY(6px);
++  transform: translateY(8px);
++}
++
++.feedback-pop-enter-to {
++  opacity: 1;
++  transform: translateY(0);
+ }
+ </style>
+\ No newline at end of file

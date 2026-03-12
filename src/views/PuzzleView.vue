@@ -545,13 +545,13 @@ function getSuccessMessage(idx) {
 
 /* ── Story Panel ── */
 .story-panel {
-  max-height: 400px;
+  //max-height: 400px;
   background: rgba(0, 255, 136, 0.02);
   border: 1px solid var(--border);
   border-left: 3px solid var(--green);
   border-radius: 4px;
   margin-bottom: 16px;
-  overflow-y: auto;
+  //overflow-y: auto;
   transition: all 0.2s;
 }
 
