@@ -4,27 +4,24 @@
     --bg: #000;
     --danger: #ff4d4f;
     --warning: #ffcc00;
+    --font-mono: "Courier New", monospace;
 }
 
 * { box-sizing: border-box; }
 
 html, body {
-    margin: 0;
+    max-width: 840px;
+    margin: 0 auto;
     padding: 0;
     background: var(--bg);
     color: var(--green);
-    font-family: "Courier New", monospace;
-}
-
-.container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 24px;
+    font-family: var(--font-mono);
 }
 
 .terminal {
     display: flex;
     flex-direction: column;
+    width:100%;
     gap: 10px;
     border: 2px solid var(--green);
     padding: 24px;
@@ -110,7 +107,6 @@ textarea {
 .control-panel {
     align-items: center;
     display: flex;
-    max-width: 80vw;
     justify-content: space-between;
     background: #000;
     border-bottom: 1px solid var(--green);

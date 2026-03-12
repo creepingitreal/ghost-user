@@ -20,7 +20,7 @@
 
       <h3>Your Investigation Paths</h3>
 
-      <div style="margin-bottom: 12px;">
+      <div class="btn-container">
         <router-link
             class="btn"
             :to="{ name: 'puzzle', params: { mode: 'basic', id: 1 } }"
