@@ -134,11 +134,11 @@
       <div v-if="queryResult !== null" class="result-panel">
         <div class="result-header">
           <span class="result-label">Query Results</span>
-          <span class="result-count">
-            {{ resultRowCount }} row{{ resultRowCount !== 1 ? 's' : '' }} returned
+          <span class="result-count" typeof="sql">
           </span>
+            {{ resultRowCount }} row{{ resultRowCount !== 1 ? 's' : '' }} returned
         </div>
-        <ResultsTable :result="queryResult" />
+        <ResultsTable :results="queryResult" />
       </div>
     </transition>
 
@@ -260,15 +260,13 @@ const showSchema = ref(false)
 const storyCollapsed = ref(false)
 const attemptCount = ref(0)
 
-const schemaQueries = [
-  "SELECT name FROM sqlite_master WHERE type='table';",
-  'PRAGMA table_info(users);',
-  'PRAGMA table_info(transactions);',
-  'PRAGMA table_info(audit_logs);',
-  'SELECT * FROM users LIMIT 5;',
-  'SELECT * FROM transactions LIMIT 5;',
-  'SELECT * FROM audit_logs LIMIT 5;',
-]
+const schemaQueries = {
+  users:          'DESCRIBE users',
+  transactions:   'DESCRIBE transactions',
+  audit_logs:     'DESCRIBE audit_logs',
+  sessions:       'DESCRIBE sessions',
+  network_events: 'DESCRIBE network_events',
+}
 
 const resultRowCount = computed(() => {
   if (!queryResult.value || !queryResult.value[0]) return 0

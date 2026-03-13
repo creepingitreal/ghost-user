@@ -10,7 +10,7 @@
 * { box-sizing: border-box; }
 
 html, body {
-    max-width: 840px;
+    max-width: 900px;
     margin: 0 auto;
     padding: 5px;
     background: var(--bg);
