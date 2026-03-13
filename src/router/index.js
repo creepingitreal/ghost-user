@@ -4,12 +4,23 @@ import PuzzleView from '../views/PuzzleView.vue'
 import FinalView from '../views/FinalView.vue'
 import { pinia } from '../plugins/pinia'
 import { useProgressStore } from '../stores/progressStore'
+import SplashView from "../views/SplashView.vue";
 
 const routes = [
-    { path: '/', name: 'home', component: HomeView },
+    {
+        path: '/',
+        name: 'splash',
+        component: SplashView,
+    },
+    { path: '/home', name: 'home', component: HomeView },
     { path: '/:mode(basic|advanced)/:id(\\d+)', name: 'puzzle', component: PuzzleView, props: true },
     { path: '/:mode(basic|advanced)/final', name: 'final', component: FinalView, props: true },
-    { path: '/:pathMatch(.*)*', redirect: '/' }
+    { path: '/:pathMatch(.*)*', redirect: '/' },
+    {
+        path: '/final',
+        name: 'final',
+        component: FinalView,
+    },
 ]
 
 const router = createRouter({

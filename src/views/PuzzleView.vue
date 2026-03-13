@@ -346,13 +346,14 @@ function submitAnswer() {
 }
 
 function nextPuzzle() {
-  if (isLastPuzzle.value) {
-    router.push({ name: 'complete', params: { mode } })
+  if (mode.value === 'advanced' && isLastPuzzle.value) {
+      router.push({ name: 'final' })
   } else {
     const next = puzzles[currentIndex.value + 1]
     router.push({ name: 'puzzle', params: { mode, id: next.id } })
   }
 }
+
 
 function navigateTo(index) {
   // Allow navigation to solved puzzles or current
