@@ -1,4 +1,3 @@
-// src/composables/useDb.js
 // AlaSQL via dynamic import() — keeps initial bundle small.
 //
 // IMPORTANT — AlaSQL reserved words used as column names must be backtick-quoted

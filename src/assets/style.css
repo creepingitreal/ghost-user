@@ -179,7 +179,6 @@ body {
 .modal-fade-leave-to {
     opacity: 0;
 }
-
 /* ══════════════════════════════════════════════════
    LIGHT MODE
    Activate by adding class="light" to <html> or <body>,
@@ -246,5 +245,307 @@ button {
 @keyframes spin {
     to {
         transform: rotate(360deg);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   mobile.css — responsive overrides for Ghost User
+   Import LAST in main.js, after global.css and all component CSS:
+     import './assets/mobile.css'
+
+   Breakpoints:
+     ≤ 600px  — phone portrait   (most fixes live here)
+     ≤ 800px  — phone landscape / small tablet
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Global body max-width — let it breathe on mobile ── */
+@media (max-width: 800px) {
+    body {
+        max-width: 100%;
+    }
+}
+
+/* ═══════════════════════════════════════════════
+   SPLASH VIEW
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 600px) {
+    /* Remove the white-space:pre from .splash so the body can flex-wrap */
+    .splash {
+        white-space: normal;
+        cursor: pointer;
+    }
+
+    /* ASCII art: shrink font until it fits, hide overflow cleanly */
+    .ascii {
+        font-size: 7px;
+        line-height: 1.1;
+        overflow-x: auto;
+        max-width: calc(100vw - 2rem);
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .body {
+        padding: 1rem 0.75rem;
+        width: 100%;
+    }
+
+    .meta {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        font-size: 0.6rem;
+        padding: 0.3rem 0.6rem;
+    }
+
+    .enter-btn {
+        font-size: 0.75rem;
+        padding: 0.6rem 1.2rem;
+        letter-spacing: 0.1em;
+    }
+
+    /* Corners: bring in slightly so they don't clip on narrow screens */
+    .corner { width: 16px; height: 16px; }
+    .tl { top: 10px; left: 10px; }
+    .tr { top: 10px; right: 10px; }
+    .bl { bottom: 10px; left: 10px; }
+    .br { bottom: 10px; right: 10px; }
+}
+
+/* ═══════════════════════════════════════════════
+   HOME VIEW
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 800px) {
+    /* Allow home to scroll rather than clipping content */
+    .home {
+        max-height: none;
+        overflow: auto;
+    }
+
+    .home-inner {
+        height: auto;
+        overflow: visible;
+        gap: 0.7rem;
+        padding: 0.8rem 1rem 1.2rem;
+    }
+
+    /* Stack tracks vertically */
+    .tracks {
+        grid-template-columns: 1fr;
+    }
+
+    .track-card {
+        max-height: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .logo { font-size: 1rem; }
+    .logo-eyebrow { font-size: 0.5rem; }
+
+    /* Briefing strip: 2×2 grid on very small screens */
+    .briefing-strip {
+        flex-wrap: wrap;
+        padding: 0.4rem 0.7rem;
+        gap: 0.5rem 0;
+    }
+    .strip-item {
+        flex: 0 0 calc(50% - 0.5px);
+    }
+    .strip-divider {
+        display: none;
+    }
+
+    .home-footer { font-size: 0.52rem; padding: 0 0 0.6rem; }
+}
+
+/* ═══════════════════════════════════════════════
+   TASK VIEW
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 800px) {
+    .terminal {
+        padding: 0.75rem 0.9rem 2rem;
+        gap: 0.7rem;
+        /* Remove fixed max-width so it fills the screen */
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Nav: stack mode badge + counter below the back button */
+    .task-nav {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .task-nav-right {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        width: 100%;
+    }
+
+    .mode-badge { font-size: 0.65rem; }
+    .task-counter { font-size: 0.62rem; }
+    .timer-display { font-size: 0.6rem; }
+
+    /* Progress nodes: slightly larger tap target on mobile */
+    .progress-node {
+        width: 24px;
+        height: 24px;
+        font-size: 0.55rem;
+    }
+
+    .progress-bar-wrap {
+        height: 28px;
+    }
+
+    /* Clues strip: wrap onto multiple lines naturally */
+    .clues-strip {
+        font-size: 0.65rem;
+        padding: 6px 10px;
+    }
+
+    /* Story text: slightly tighter */
+    .story-text { font-size: 0.75rem; }
+
+    /* Hints/solution: stack vertically instead of side-by-side */
+    .assist-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    /* Editor: shorter default height on mobile */
+    .sql-editor { min-height: 80px; }
+
+    /* Answer row: stack input + button */
+    .answer-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .answer-row .btn {
+        justify-content: center;
+    }
+
+    /* Feedback: full width button */
+    .feedback-panel .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Schema chips: smaller */
+    .schema-chip { font-size: 0.62rem; padding: 3px 6px; }
+
+    /* Result table: horizontal scroll */
+    .result-panel {
+        overflow-x: auto;
+    }
+}
+
+/* ═══════════════════════════════════════════════
+   FINAL VIEW
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 800px) {
+    .debrief {
+        padding: 1.5rem 1rem;
+        gap: 1.1rem;
+    }
+
+    .db-title { font-size: 1.6rem; }
+}
+
+@media (max-width: 600px) {
+    /* Clue grid: 5 columns is too tight on phones — use 3 then wrap */
+    .clue-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    /* Answer row: stack on mobile */
+    .input-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .sub-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    /* Victory box */
+    .vic-box {
+        padding: 1.8rem 1.2rem;
+        gap: 1rem;
+    }
+
+    .vic-name { font-size: 1.4rem; }
+    .vic-stats { gap: 2rem; }
+}
+
+/* ═══════════════════════════════════════════════
+   BACK TO HQ MODAL  (global, not scoped)
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 600px) {
+    .hq-box {
+        padding: 1.4rem 1.2rem;
+        gap: 0.8rem;
+    }
+
+    .hq-action-btn {
+        padding: 0.55rem 0.7rem;
+    }
+
+    .hq-action-btn .action-sub {
+        display: none; /* hide subtitle on very small screens — label is enough */
+    }
+}
+
+/* ═══════════════════════════════════════════════
+   REFRESH GUARD MODAL
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 600px) {
+    .rg-box {
+        padding: 1.4rem 1.2rem;
+        gap: 0.8rem;
+    }
+
+    .rg-btn {
+        font-size: 0.7rem;
+        padding: 0.5rem 0.8rem;
+    }
+}
+
+/* ═══════════════════════════════════════════════
+   RESULTS TABLE
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 600px) {
+    .table {
+        font-size: 12px;
+    }
+
+    .table th,
+    .table td {
+        padding: 3px 7px;
+        /* Allow long values to wrap rather than force horizontal scroll */
+        white-space: normal;
+        word-break: break-word;
+    }
+}
+
+/* ═══════════════════════════════════════════════
+   UTILITY: prevent iOS font-size zoom on input focus
+   ═══════════════════════════════════════════════ */
+
+@media (max-width: 600px) {
+    input,
+    textarea,
+    select {
+        font-size: 16px !important; /* iOS zooms in if font-size < 16px */
     }
 }
