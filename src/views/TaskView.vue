@@ -69,7 +69,7 @@
     </div>
 
     <!-- ── Schema ── -->
-    <div class="schema-row">
+    <div v-if="!taskSolved" class="schema-row">
       <button class="btn secondary small" @click="showSchema = !showSchema">
         {{ showSchema ? '▼ Hide' : '▶ Show' }} Database Schema
       </button>
@@ -144,7 +144,7 @@
 
     <!-- ── Results (persisted) ── -->
     <transition name="fade">
-      <div v-if="queryResult !== null" class="result-panel">
+      <div v-if="queryResult !== null &&  !taskSolved" class="result-panel">
         <div class="result-header">
           <span class="result-label">Query Results</span>
           <span class="result-count">{{ resultRowCount }} row{{ resultRowCount !== 1 ? 's' : '' }}</span>
