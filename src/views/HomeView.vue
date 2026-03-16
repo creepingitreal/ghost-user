@@ -39,12 +39,38 @@
         </div>
       </div>
 
+      <!-- Incident briefing -->
+      <div class="inc-panel">
+        <div class="inc-panel-header">
+          <h1 class="inc-panel-label">// INCIDENT BRIEFING — GHOST USER</h1>
+        </div>
+        <div class="inc-panel-body">
+          <p class="inc-text">
+            At <strong>02:14 UTC</strong>, an unidentified intruder — codename
+            <strong>Ghost User</strong> — breached internal systems and initiated a
+            sequence of tampered logs, corrupted identities, and high-risk data
+            movements. Their path through the network is fragmented and obscured.
+          </p>
+          <p class="inc-text">
+            Your mission is to reconstruct the Ghost User's movements using SQL-based
+            investigation across <code>users</code>, <code>transactions</code>, and
+            <code>audit_logs</code>. Each successful analysis reveals a
+            <strong>CLUE</strong> used to unmask the Ghost User's signature.
+          </p>
+        </div>
+      </div>
+
+      <!-- Section label -->
+      <div class="paths-header-row">
+        <span class="paths-header">YOUR INVESTIGATION PATHS</span>
+      </div>
+
       <!-- Track cards -->
       <div class="tracks">
-
         <!-- Basic -->
         <div class="track-card" :class="{ complete: basicComplete }">
           <div class="track-header">
+
             <div class="track-header-text">
               <div class="track-tag">TRACK 01</div>
               <div class="track-name">Field Analyst</div>

@@ -8,7 +8,7 @@ import SplashView from "../views/SplashView.vue";
 
 const routes = [
     { path: '/', name: '/', component: SplashView },
-    { path: '/briefing-room', name: 'home', component: HomeView },
+    { path: '/h-q', name: 'home', component: HomeView },
     { path: '/:mode(basic|advanced)/:id(\\d+)', name: 'task', component: TaskView, props: true },
     { path: '/final/:mode?', name: 'final', component: FinalView },
     { path: '/:pathMatch(.*)*', redirect: '/' }

@@ -20,6 +20,79 @@
     );
 }
 
+.inc-panel {
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--green-d);
+    background: rgba(0,0,0,0.3);
+    flex-shrink: 0;
+}
+
+.inc-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.9rem;
+    border-bottom: 1px solid rgba(0, 255, 65, 0.07);
+}
+
+.inc-panel-label {
+    font-size: 0.58rem;
+    letter-spacing: 0.16em;
+    color: rgba(0, 255, 65, 0.4);
+}
+
+.inc-panel-body {
+    max-height: 200px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.inc-text {
+    font-size: 0.72rem;
+    line-height: 1.65;
+    color: var(--muted);
+    padding: 0.5rem 0.9rem;
+    margin: 0;
+}
+
+.inc-text + .inc-text {
+    padding-top: 0;
+}
+
+.inc-text strong {
+    color: var(--text);
+}
+
+.inc-text code {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--green);
+    background: rgba(0, 255, 65, 0.07);
+    padding: 0 0.28rem;
+}
+
+
+.paths-header-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-shrink: 0;
+}
+
+.paths-header-row::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.paths-header {
+    font-size: 0.52rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
 .home-inner {
     position: relative;
     z-index: 1;
@@ -450,9 +523,12 @@
 
     /* Prevent any ancestor from wrapping or clipping the art */
     display: block;
-    width: max-content;        /* expand to exactly fit the longest line */
-    max-width: 100%;           /* but don't overflow the viewport */
-    overflow-x: auto;          /* scroll on very small screens instead of breaking */
-    scrollbar-width: none;     /* hide scrollbar — it's a fallback, not a feature */
+    width: max-content; /* expand to exactly fit the longest line */
+    max-width: 100%; /* but don't overflow the viewport */
+    overflow-x: auto; /* scroll on very small screens instead of breaking */
+    scrollbar-width: none; /* hide scrollbar — it's a fallback, not a feature */
 }
-.ascii::-webkit-scrollbar { display: none; }
+
+.ascii::-webkit-scrollbar {
+    display: none;
+}
