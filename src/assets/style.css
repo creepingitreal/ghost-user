@@ -1,149 +1,74 @@
+/* src/assets/global.css
+   Ghost User — global design tokens & base styles.
+   Import in main.js: import './assets/global.css'
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ══════════════════════════════════════════════════
+   DARK MODE (default)
+══════════════════════════════════════════════════ */
 :root {
-    --green:    #00ff41;
-    --green-d:  rgba(0,255,65,0.5);
-    --bg:       #0a0a0a;
-    --text:     #b8d4b8;
-    --muted:    rgba(184,212,184,0.45);
-    --border:   rgba(0,255,65,0.18);
-    --font-mono:'Share Tech Mono', 'Courier New', monospace;
-    --red:      #ff3333;
-    --amber:    #ffcc00;
+    --green:      #00ff41;
+    --green-d:    rgba(0, 255, 65, 0.5);
+    --green-faint:rgba(0, 255, 65, 0.1);
+    --bg:         #0a0a0a;
+    --bg-panel:   rgba(0, 0, 0, 0.45);
+    --text:       #b8d4b8;
+    --muted:      rgba(184, 212, 184, 0.45);
+    --border:     rgba(0, 255, 65, 0.18);
+    --border-hi:  rgba(0, 255, 65, 0.45);
+    --red:        #ff3333;
+    --amber:      #ffcc00;
+    --font-mono:  'Share Tech Mono', 'Courier New', monospace;
+
+    color-scheme: dark;
 }
 
-html {
-    padding: 50px 0;
+/* ══════════════════════════════════════════════════
+   LIGHT MODE
+   Activate by adding class="light" to <html> or <body>,
+   or toggle via: document.documentElement.classList.toggle('light')
+══════════════════════════════════════════════════ */
+.light {
+    --green:      #007a1f;          /* deep terminal green on white */
+    --green-d:    rgba(0, 122, 31, 0.5);
+    --green-faint:rgba(0, 122, 31, 0.08);
+    --bg:         #f0f4f0;          /* off-white with a green tint */
+    --bg-panel:   rgba(255, 255, 255, 0.7);
+    --text:       #1a2e1a;          /* near-black green */
+    --muted:      rgba(26, 46, 26, 0.5);
+    --border:     rgba(0, 100, 20, 0.2);
+    --border-hi:  rgba(0, 100, 20, 0.5);
+    --red:        #cc1111;
+    --amber:      #8a6200;
+    color-scheme: light;
 }
 
-html, body {
-    max-width: 900px;
-    max-height: 90%;
-    margin: 0 auto;
+/* ── Base ── */
+html, body, #app {
+    height: 100%;
     background: var(--bg);
-    color: var(--green);
+    color: var(--text);
     font-family: var(--font-mono);
+    font-size: 18px;
+    line-height: 1.6;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* ── Buttons ── */
 button {
     max-width: fit-content;
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 10px 18px; background: transparent;
-    border: 1px solid var(--green); color: var(--green);
-    font-family: var(--font-mono); font-size: 0.8rem; cursor: pointer;
-    transition: all 0.15s; white-space: nowrap;
-}
-button:hover:not(:disabled) { background: rgba(0,255,65,0.08); box-shadow: 0 0 6px rgba(0,255,65,0.15); }
-button:disabled { opacity: 0.38; cursor: not-allowed; }
-button.secondary { border-color: var(--border); color: var(--muted); }
-button.secondary:hover:not(:disabled) { border-color: var(--muted); background: rgba(255,255,255,0.03); box-shadow: none; }
-button.small  { padding: 4px 9px; font-size: 0.72rem; }
-button.success { border-color: var(--green); color: var(--green); }
-button.large  { padding: 9px 20px; font-size: 0.85rem; }
-.spinner { animation: spin 1s linear infinite; display: inline-block; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── Transitions ── */
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
-.fade-enter-from,   .fade-leave-to     { opacity: 0; }
-
-.story-slide-enter-active, .story-slide-leave-active { transition: all 0.25s ease; overflow: hidden; }
-.story-slide-enter-from,   .story-slide-leave-to     { opacity: 0; max-height: 0; }
-.story-slide-enter-to,     .story-slide-leave-from   { opacity: 1; max-height: 600px; }
-
-.feedback-pop-enter-active { transition: all 0.3s ease; }
-.feedback-pop-enter-from   { opacity: 0; transform: translateY(6px); }
-
-.control-panel {
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
-    background: #000;
-    border-bottom: 1px solid var(--green);
-    padding: 8px 0;
-    margin: 0 auto;
-    color: var(--green-dim);
 }
 
-.icon-btn {
-    background: black;
-    border: 1px solid var(--green);
-    color: var(--green);
-    margin-left: 10px;
-    padding: 4px 8px;
-    cursor: pointer;
-}
+/* ── Scrollbars ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--green-d); border-radius: 2px; }
 
-/* -------------------------------------------------------
-   LIGHT THEME (enabled when <body class="light"> is applied)
-   ------------------------------------------------------- */
-
-body.light {
-    --bg: #f8fafc;               /* very light blue-grey */
-    --green: #0e4d0e;            /* dark green for text */
-    --green-dim: #1d7a1d;        /* slightly brighter green */
-    --danger: #b00020;           /* material red */
-    --warning: #b08900;          /* gold-ish amber */
-
-    background: var(--bg);
-    color: #0a0a0a;              /* darker text color */
-}
-
-/* Terminal container */
-body.light .terminal {
-    background: #ffffff;
-    color: #0a0a0a;
-    border: 2px solid #0a0a0a;
-    box-shadow: 0 0 8px rgba(0,0,0,0.08);
-}
-
-/* Buttons */
-body.light .btn {
-    background: #ffffff;
-    color: #0a0a0a;
-    border: 1px solid #0a0a0a;
-}
-
-body.light .btn.secondary {
-    border-color: var(--warning);
-    color: var(--warning);
-}
-
-/* Textarea / input fields */
-body.light textarea,
-body.light input,
-body.light .schema,
-body.light #output {
-    background: #ffffff;
-    color: #0a0a0a;
-    border-color: #0a0a0a;
-}
-
-/* ASCII banners */
-body.light .ascii-banner,
-body.light .ascii-small {
-    color: #0a0a0a;
-}
-
-/* Success & Error */
-body.light .success {
-    color: #1d7a1d; /* dim green but readable */
-}
-
-body.light .error {
-    color: #b00020;
-}
-
-/* Tables */
-body.light table,
-body.light th,
-body.light td {
-    border-color: #0a0a0a !important;
-    color: #0a0a0a;
-}
-
-/* Control Panel (if using one) */
-body.light .control-panel {
-    background: #fff;
-    border-bottom: 1px solid #0a0a0a;
-    color: #0a0a0a;
-}
+/* ── Global keyframes ── */
+@keyframes blink  { 50% { opacity: 0; } }
+@keyframes pulse  { 50% { opacity: 0.2; } }
+@keyframes spin   { to  { transform: rotate(360deg); } }

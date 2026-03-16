@@ -1,39 +1,48 @@
-// src/stores/progressStore.js
+// src/stores/progress.js
+// Keyed by: ghost-{mode}-progress → object { "1": { solved, clue, assisted, solvedAt }, ... }
+// Supports isSolved, isUnlocked, markSolved, reset, hint tracking
+
 import { defineStore } from 'pinia'
 
-const STORAGE_KEY = 'ghost_user_progress_v2'
+const KEY = (mode) => `ghost-${mode}-progress`
 
-function load() {
+function load(mode) {
     try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { basic: {}, advanced: {} }
-    } catch {
-        return { basic: {}, advanced: {} }
-    }
+        const raw = localStorage.getItem(KEY(mode))
+        if (!raw) return {}
+        const parsed = JSON.parse(raw)
+        // Handle both array and object formats from older versions
+        if (Array.isArray(parsed)) {
+            const obj = {}
+            parsed.forEach((v, i) => { if (v) obj[i + 1] = v })
+            return obj
+        }
+        return parsed || {}
+    } catch { return {} }
 }
 
-function save(state) {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            basic:    state.basic,
-            advanced: state.advanced,
-        }))
-    } catch {}
+function save(mode, data) {
+    try { localStorage.setItem(KEY(mode), JSON.stringify(data)) } catch {}
 }
 
 export const useProgressStore = defineStore('progress', {
-    state: () => load(),
+    state: () => ({
+        basic:    load('basic'),
+        advanced: load('advanced'),
+        basicHints:    {},
+        advancedHints: {},
+    }),
 
     actions: {
         markSolved(mode, id, meta = {}) {
             if (!this[mode]) this[mode] = {}
             this[mode][id] = {
                 solved:    true,
-                assisted:  meta.assisted  ?? false,
-                clue:      meta.clue      ?? '',
-                solvedAt:  meta.solvedAt  ?? new Date().toISOString(),
-                timeMs:    meta.timeMs    ?? null,
+                clue:      meta.clue    || '',
+                assisted:  meta.assisted || false,
+                solvedAt:  meta.solvedAt || new Date().toISOString(),
             }
-            save(this.$state)
+            save(mode, this[mode])
         },
 
         isSolved(mode, id) {
@@ -45,35 +54,46 @@ export const useProgressStore = defineStore('progress', {
             return this.isSolved(mode, id - 1)
         },
 
-        getEntry(mode, id) {
-            return this[mode]?.[id] ?? null
+        getSolvedData(mode, id) {
+            return this[mode]?.[id] || null
         },
 
-        getSolvedIds(mode) {
+        solvedIds(mode) {
             return Object.entries(this[mode] || {})
                 .filter(([, v]) => v?.solved)
                 .map(([k]) => parseInt(k))
         },
 
-        getClues(mode) {
-            return Object.values(this[mode] || {})
-                .filter(v => v?.solved && v?.clue)
-                .map(v => v.clue)
+        acquiredClues(mode, tasks) {
+            return tasks
+                .filter(t => this.isSolved(mode, t.id))
+                .map(t => t.clue)
         },
 
-        reset() {
-            this.basic    = {}
-            this.advanced = {}
-            save(this.$state)
+        markHintUsed(mode, id) {
+            const key = `${mode}Hints`
+            if (!this[key]) this[key] = {}
+            this[key][id] = true
         },
 
-        // Returns true if user confirmed, false if cancelled
-        confirmReset() {
-            const confirmed = window.confirm(
-                '⚠ RESET INVESTIGATION\n\nThis will permanently clear all task progress and collected clues.\n\nAre you sure?'
-            )
-            if (confirmed) this.reset()
-            return confirmed
+        isHintUsed(mode, id) {
+            return !!this[`${mode}Hints`]?.[id]
+        },
+
+        reset(mode) {
+            if (mode) {
+                this[mode] = {}
+                save(mode, {})
+            } else {
+                this.basic    = {}
+                this.advanced = {}
+                save('basic', {})
+                save('advanced', {})
+            }
+        },
+
+        countSolved(mode) {
+            return Object.values(this[mode] || {}).filter(v => v?.solved).length
         },
     },
 })
