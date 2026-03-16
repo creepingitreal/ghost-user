@@ -16,7 +16,7 @@ export const basicTasks = [
     {
         id: 1,
         story: `03:47. The call drags you out of a dead sleep.\n\n"We've been hit."\n\nYour CISO's voice is flat. Controlled. That's worse than panic.\n\nNexus Financial's production database — fifteen years of client portfolios, trading histories, and personnel records — was accessed by something that has no right to exist in your systems. No alarm fired. No access log flagged it. Whatever got in knew exactly where to look.\n\nYou have a read-only forensic mirror of the database and six hours before the regulators arrive. The lawyers are already on standby.\n\nBefore you can find what was taken, you need to know what's there. You have credentials but no documentation. Map the terrain.`,
-        prompt: `You have database access but no schema. What tables exist in this database, and what does the structure of the users table actually look like?`,
+        prompt: `You have database access but no schema. What tables exist in this database, and what does the structure of the users table actually look like? How many columns are in the users table?`,
         expectedAnswer: '8',
         clue: 'GHOST_PROTOCOL',
         hints: [
