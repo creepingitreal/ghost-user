@@ -132,10 +132,10 @@
 import '../assets/final-view.css'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useProgressStore } from '../stores/progress'
-import { useSoundStore }    from '../stores/sound'
-import { basicTasks }       from '../validators/basic'
-import { advancedTasks }    from '../validators/advanced'
+import { useProgressStore } from '../stores/progressStore.js'
+import { useSoundStore }    from '../stores/soundStore.js'
+import { basicTasks }       from '../validators/basic.js'
+import { advancedTasks }    from '../validators/advanced.js'
 
 const route         = useRoute()
 const router        = useRouter()

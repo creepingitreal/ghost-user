@@ -1,5 +1,7 @@
 <script setup>
+import RefreshModal from "./components/RefreshModal.vue";
 </script>
 <template>
-    <router-view />
+  <RefreshModal/>
+  <router-view />
 </template>

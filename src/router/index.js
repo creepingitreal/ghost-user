@@ -10,7 +10,7 @@ const routes = [
     { path: '/', name: '/', component: SplashView },
     { path: '/briefing-room', name: 'home', component: HomeView },
     { path: '/:mode(basic|advanced)/:id(\\d+)', name: 'task', component: TaskView, props: true },
-    { path: '/:mode(basic|advanced)/final', name: 'final', component: FinalView, props: true },
+    { path: '/final/:mode?', name: 'final', component: FinalView },
     { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 

@@ -424,8 +424,8 @@ onMounted(() => {
 
 function resetProgress() {
   if (confirm("Reset all progress?")) {
-    progressStore.reset(mode)
-    timerStore.reset(mode)
+    progressStore.reset(mode.value)
+    timerStore.reset()
     clearEditor()
   }
 }
