@@ -11,8 +11,10 @@
           <div class="logo-eyebrow">NEXUS FINANCIAL // IR PORTAL</div>
         </div>
         <div class="header-right">
-          <span class="status-dot" />
-          <span class="status-text">BREACH ACTIVE</span>
+          <span class="status-dot" :class="{ resolved: caseSolved }" />
+          <span class="status-text" :class="{ resolved: caseSolved }">
+            {{ caseSolved ? 'CASE RESOLVED' : 'BREACH ACTIVE' }}
+          </span>
         </div>
       </header>
 
@@ -30,19 +32,25 @@
         <div class="strip-divider" />
         <div class="strip-item">
           <span class="strip-label">EXFILTRATED</span>
-          <span class="strip-value danger">436 MB</span>
+          <span class="strip-value" :class="caseSolved ? 'resolved-val' : 'danger'">
+            {{ caseSolved ? 'RECOVERED' : '436 MB' }}
+          </span>
         </div>
         <div class="strip-divider" />
         <div class="strip-item">
           <span class="strip-label">SUSPECT</span>
-          <span class="strip-value warning">UNIDENTIFIED</span>
+          <span class="strip-value" :class="caseSolved ? 'resolved-val' : 'warning'">
+          {{ caseSolved ? 'IDENTIFIED' : 'UNIDENTIFIED' }}
+          </span>
         </div>
       </div>
 
       <!-- Incident briefing -->
       <div class="inc-panel">
         <div class="inc-panel-header">
-          <h1 class="inc-panel-label">// INCIDENT BRIEFING — GHOST USER</h1>
+          <h1 class="inc-panel-label">
+            {{ caseSolved ? '// CASE CLOSED — NX-2024-0603' : '// INCIDENT BRIEFING — GHOST USER' }}
+          </h1>
         </div>
         <div class="inc-panel-body">
           <p class="inc-text">
@@ -222,6 +230,8 @@ const basicStartRoute = computed(() => ({
 const advStartRoute = computed(() => ({
   name: 'task', params: { mode: 'advanced', id: getStartId('advanced', 10) }
 }))
+
+const caseSolved = computed(() => progressStore.isCaseSolved())
 
 // ── Reset ─────────────────────────────────────────────────────────────────────
 function confirmReset(mode) {

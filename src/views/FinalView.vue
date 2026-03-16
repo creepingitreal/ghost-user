@@ -186,6 +186,7 @@ function submit() {
     wrongMsg.value = ''
     stage.value    = 'victory'
     soundStore.play('victory')
+    progressStore.markCaseSolved()
     startMatrix()
   } else {
     wrongMsg.value = `That username doesn't match our records. The account you're looking for was identified in Advanced Task 5.`

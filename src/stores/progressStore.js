@@ -8,9 +8,13 @@ const STORAGE_KEY = 'sql_escape_progress_v1'
 
 function load() {
     try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { basic: {}, advanced: {} }
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { basic: {}, advanced: {} }
+        return {
+            ...data,
+            caseSolved: localStorage.getItem('ghost-case-solved') === 'true',
+        }
     } catch {
-        return { basic: {}, advanced: {} }
+        return { basic: {}, advanced: {}, caseSolved: false }
     }
 }
 
@@ -63,11 +67,31 @@ export const useProgressStore = defineStore('progress', {
         reset(mode) {
             if (mode) {
                 this[mode] = {}
+                save(this.$state)
             } else {
-                this.basic    = {}
-                this.advanced = {}
+                this.basic      = {}
+                this.advanced   = {}
+                this.caseSolved = false
+                save(this.$state)
+                try { localStorage.removeItem('ghost-case-solved') } catch {}
             }
-            save(this.$state)
+        },
+        markCaseSolved() {
+            this.caseSolved = true
+            try {
+                localStorage.setItem('ghost-case-solved', 'true')
+            } catch {}
+        },
+
+        isCaseSolved() {
+            // Check in-memory state first, then fall back to localStorage
+            // (handles page reload between final view and home view)
+            if (this.caseSolved) return true
+            try {
+                return localStorage.getItem('ghost-case-solved') === 'true'
+            } catch {
+                return false
+            }
         },
 
         markHintUsed(mode, id) {
