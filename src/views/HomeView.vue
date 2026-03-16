@@ -1,13 +1,14 @@
 <template>
   <div class="home">
-    <div class="scanlines" />
+    <div class="scanline" />
 
     <div class="home-inner">
+
       <!-- Header -->
       <header class="site-header">
         <div class="header-left">
+          <span class="ascii">{{ascii}}</span>
           <div class="logo-eyebrow">NEXUS FINANCIAL // IR PORTAL</div>
-          <h1 class="logo">OPERATION <span class="logo-accent">GHOST USER</span></h1>
         </div>
         <div class="header-right">
           <span class="status-dot" />
@@ -38,23 +39,26 @@
         </div>
       </div>
 
-      <!-- Two track cards -->
+      <!-- Track cards -->
       <div class="tracks">
+
         <!-- Basic -->
-        <div class="track-card">
+        <div class="track-card" :class="{ complete: basicComplete }">
           <div class="track-header">
-            <div>
+            <div class="track-header-text">
               <div class="track-tag">TRACK 01</div>
               <div class="track-name">Field Analyst</div>
-              <div class="track-desc-toggle" @click="toggleDesc('basic')">
+              <button class="brief-toggle" @click="toggleDesc('basic')">
                 Mission briefing
                 <span class="toggle-arrow" :class="{ open: descOpen.basic }">▾</span>
-              </div>
+              </button>
               <div class="track-desc" :class="{ open: descOpen.basic }">
-                Five targeted queries. You'll map the database, hunt ghost accounts, trace stolen data to its source, and pinpoint the attacker's IP. Every query teaches a core MySQL skill. Start here if you're new to SQL forensics.
+                Five targeted queries. Map the database, expose ghost accounts, trace the data outflow, and identify the attacker's origin IP. Every task teaches a core MySQL skill.
               </div>
             </div>
-            <div class="track-badge basic-badge">BASIC</div>
+            <div class="track-badge basic-badge" :class="{ complete: basicComplete }">
+              {{ basicComplete ? 'COMPLETE' : 'BASIC' }}
+            </div>
           </div>
 
           <div class="track-skills">
@@ -63,35 +67,49 @@
 
           <div class="track-progress">
             <div class="progress-row">
-              <span class="progress-label">Progress</span>
-              <span class="progress-count">{{ basicSolved }}/5</span>
+              <span class="progress-label">{{ basicComplete ? 'Investigation complete' : 'Progress' }}</span>
+              <span class="progress-count" :class="{ complete: basicComplete }">{{ basicSolved }}/5</span>
             </div>
             <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: (basicSolved / 5 * 100) + '%' }" />
+              <div class="progress-fill" :class="{ complete: basicComplete }" :style="{ width: (basicSolved / 5 * 100) + '%' }" />
             </div>
           </div>
 
-          <router-link :to="basicStartRoute" class="track-btn basic-btn">
-            {{ basicSolved === 0 ? 'BEGIN INVESTIGATION' : basicSolved === 5 ? 'REVIEW TRACK' : 'CONTINUE' }}
+          <!-- Complete state: show reset option -->
+          <template v-if="basicComplete">
+            <div class="complete-msg">✓ All tasks solved</div>
+            <div class="complete-actions">
+              <router-link :to="{ name: 'task', params: { mode: 'basic', id: 1 } }" class="track-btn basic-btn">
+                REVIEW TRACK&nbsp<span class="btn-arrow">→</span>
+              </router-link>
+              <button class="reset-btn" @click="confirmReset('basic')">↺ Clear &amp; restart</button>
+            </div>
+          </template>
+
+          <!-- In-progress / not started -->
+          <router-link v-else :to="basicStartRoute" class="track-btn basic-btn">
+            {{ basicSolved === 0 ? 'BEGIN INVESTIGATION' : 'CONTINUE' }}
             <span class="btn-arrow">→</span>
           </router-link>
         </div>
 
         <!-- Advanced -->
-        <div class="track-card">
+        <div class="track-card track-adv" :class="{ complete: advComplete }">
           <div class="track-header">
-            <div>
-              <div class="track-tag">TRACK 02</div>
+            <div class="track-header-text">
+              <div class="track-tag adv-tag">TRACK 02</div>
               <div class="track-name">Senior Investigator</div>
-              <div class="track-desc-toggle" @click="toggleDesc('advanced')">
+              <button class="brief-toggle adv-toggle" @click="toggleDesc('advanced')">
                 Mission briefing
                 <span class="toggle-arrow" :class="{ open: descOpen.advanced }">▾</span>
-              </div>
+              </button>
               <div class="track-desc" :class="{ open: descOpen.advanced }">
-                Ten deep-dive queries spanning JOIN, CTE, GROUP BY, aggregate functions, and timeline reconstruction. You'll build a complete forensic picture and unmask the primary perpetrator. Collect clues as you go — you'll need them at the end.
+                Ten deep-dive queries: JOINs, CTEs, GROUP BY, aggregates, privilege escalation, timeline reconstruction. At the end — identify the perpetrator by name.
               </div>
             </div>
-            <div class="track-badge adv-badge">ADVANCED</div>
+            <div class="track-badge adv-badge" :class="{ complete: advComplete }">
+              {{ advComplete ? 'COMPLETE' : 'ADVANCED' }}
+            </div>
           </div>
 
           <div class="track-skills">
@@ -100,24 +118,34 @@
 
           <div class="track-progress">
             <div class="progress-row">
-              <span class="progress-label">Progress</span>
-              <span class="progress-count">{{ advSolved }}/10</span>
+              <span class="progress-label">{{ advComplete ? 'Investigation complete' : 'Progress' }}</span>
+              <span class="progress-count adv-count" :class="{ complete: advComplete }">{{ advSolved }}/10</span>
             </div>
             <div class="progress-bar">
-              <div class="progress-fill adv-fill" :style="{ width: (advSolved / 10 * 100) + '%' }" />
+              <div class="progress-fill adv-fill" :class="{ complete: advComplete }" :style="{ width: (advSolved / 10 * 100) + '%' }" />
             </div>
           </div>
 
-          <router-link :to="advStartRoute" class="track-btn adv-btn">
-            {{ advSolved === 0 ? 'BEGIN INVESTIGATION' : advSolved === 10 ? 'REVIEW TRACK' : 'CONTINUE' }}
+          <template v-if="advComplete">
+            <div class="complete-msg adv-complete-msg">✓ All tasks solved</div>
+            <div class="complete-actions">
+              <router-link :to="{ name: 'task', params: { mode: 'advanced', id: 1 } }" class="track-btn adv-btn">
+                REVIEW TRACK&nbsp<span class="btn-arrow">→</span>
+              </router-link>
+              <button class="reset-btn adv-reset-btn" @click="confirmReset('advanced')">↺ Clear &amp; restart</button>
+            </div>
+          </template>
+
+          <router-link v-else :to="advStartRoute" class="track-btn adv-btn">
+            {{ advSolved === 0 ? 'BEGIN INVESTIGATION' : 'CONTINUE' }}
             <span class="btn-arrow">→</span>
           </router-link>
         </div>
+
       </div>
 
-      <!-- Footer note -->
       <div class="home-footer">
-        Complete the Advanced track to unlock the Final Debrief — identify the perpetrator using your collected clues.
+        Complete the Advanced track to unlock the Final Debrief — identify the perpetrator.
       </div>
     </div>
   </div>
@@ -126,42 +154,59 @@
 <script setup>
 import '../assets/home-view.css'
 import { ref, computed, onMounted } from 'vue'
+import { useProgressStore } from '../stores/progressStore.js'
+
+const progressStore = useProgressStore()
 
 const descOpen = ref({ basic: false, advanced: false })
 function toggleDesc(track) { descOpen.value[track] = !descOpen.value[track] }
 
-const basicProgress = ref([])
-const advProgress   = ref([])
+const basicSkills = ['SHOW TABLES', 'DESCRIBE', 'IS NULL', 'SUM', 'GROUP BY', 'LIKE']
+const advSkills   = ['COUNT DISTINCT', 'JOIN', 'LEFT JOIN', 'COALESCE', 'ORDER BY', 'CTE', 'ABS']
 
-const basicSkills = ['SHOW TABLES','DESCRIBE','IS NULL','SUM','GROUP BY','LIKE']
-const advSkills   = ['COUNT DISTINCT','JOIN','LEFT JOIN','COALESCE','ORDER BY','CTE','ABS']
+const ascii = [
+  '  ____ _               _   _   _               ',
+  ' / ___| |__   ___  ___| |_| | | |___  ___ _ __ ',
+  "| |  _| '_ \\ / _ \\/ __| __| | | / __|/ _ \\ '__|",
+  '| |_| | | | | (_) \\__ \\ |_| |_| \\__ \\  __/ |   ',
+  ' \\____|_| |_|\\___/|___/\\__|\\___/|___/\\___|_|   ',
+  '',
+  'S Q L   F O R E N S I C S   //   M Y S Q L   D I A L E C T',
+  '',
+].join('\n')
 
-onMounted(() => {
-  try {
-    const basic = JSON.parse(localStorage.getItem('ghost-basic-progress') || '[]')
-    basicProgress.value = Array.isArray(basic) ? basic : []
-    const adv = JSON.parse(localStorage.getItem('ghost-advanced-progress') || '[]')
-    advProgress.value = Array.isArray(adv) ? adv : []
-  } catch (_) {
-    basicProgress.value = []
-    advProgress.value = []
-  }
-})
 
-const basicSolved = computed(() => basicProgress.value.filter(p => p?.solved).length)
-const advSolved   = computed(() => advProgress.value.filter(p => p?.solved).length)
+// ── Progress — read directly from store (handles object format correctly) ─────
+const basicSolved = computed(() => progressStore.countSolved('basic'))
+const advSolved   = computed(() => progressStore.countSolved('advanced'))
+const basicComplete = computed(() => basicSolved.value === 5)
+const advComplete   = computed(() => advSolved.value === 10)
 
-function getStartId(progress, total) {
-  for (let i = 0; i < total; i++) {
-    if (!progress[i]?.solved) return i + 1
+// ── Routing — find first unsolved task ────────────────────────────────────────
+function getStartId(mode, total) {
+  for (let i = 1; i <= total; i++) {
+    if (!progressStore.isSolved(mode, i)) return i
   }
   return 1
 }
 
 const basicStartRoute = computed(() => ({
-  name: 'task', params: { mode: 'basic', id: getStartId(basicProgress.value, 5) }
+  name: 'task', params: { mode: 'basic', id: getStartId('basic', 5) }
 }))
 const advStartRoute = computed(() => ({
-  name: 'task', params: { mode: 'advanced', id: getStartId(advProgress.value, 10) }
+  name: 'task', params: { mode: 'advanced', id: getStartId('advanced', 10) }
 }))
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
+function confirmReset(mode) {
+  const label = mode === 'basic' ? 'Basic' : 'Advanced'
+  if (confirm(`Clear all ${label} track progress and start from the beginning?`)) {
+    progressStore.reset(mode)
+  }
+}
+
+// Refresh counts on mount in case store was hydrated before component loaded
+onMounted(() => {
+  // progressStore already reads from localStorage on init — nothing extra needed
+})
 </script>

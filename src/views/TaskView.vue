@@ -3,7 +3,7 @@
 
     <!-- ── Nav ── -->
     <div class="task-nav">
-      <button class="btn secondary small" @click="router.push({ name: 'home' })">← Back to HQ</button>
+      <BackToHQ label="← Return to HQ" :mode="String(mode)" btn-class="back-link-btn" />
       <div class="task-nav-right">
         <span class="mode-badge" :class="mode">
           {{ mode === 'basic' ? '▶ Basic' : '⚡ Advanced' }}
@@ -43,7 +43,7 @@
       </div>
 
       <div class="progress-bg">
-        <div class="progress-fill" :style="{ width: progressPct + '%' }" :class="{ complete: isLastTask && taskSolved }" />
+        <div class="progress-fill" :style="{ width: progressPct + '%' }" :class="{ 'complete': isLastTask && taskSolved }" />
       </div>
     </div>
 
@@ -227,6 +227,7 @@ import { useTimerStore }     from '../stores/timerStore.js'
 import { basicTasks }        from '../validators/basic.js'
 import { advancedTasks }     from '../validators/advanced.js'
 import {useThemeStore} from "../stores/themeStore.js";
+import BackToHQ from "../components/BackToHQ.vue";
 
 const db            = useDb()
 const router        = useRouter()

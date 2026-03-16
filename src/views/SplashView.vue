@@ -3,7 +3,7 @@
     <canvas ref="canvas" class="rain" />
     <div class="scanline" />
 
-    <div class="body" :class="{ show: ready }">
+    <div class="body" :class="{ 'show': ready }">
       <!-- ASCII logo -->
       <pre class="ascii">{{ ascii }}</pre>
 

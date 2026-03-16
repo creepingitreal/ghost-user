@@ -40,7 +40,7 @@
           </button>
         </div>
 
-        <router-link :to="{ name: 'home' }" class="back-link">← Return to HQ</router-link>
+        <BackToHQ label="← Return to HQ" btn-class="back-link-btn" />
       </div>
     </transition>
 
@@ -127,7 +127,7 @@
               <span class="vs-l">ATTEMPTS</span>
             </div>
           </div>
-          <router-link :to="{ name: 'home' }" class="vic-btn">[ RETURN TO HQ ]</router-link>
+          <BackToHQ label="←&nbspReturn to HQ" btn-class="back-link-btn" />
         </div>
       </div>
     </transition>
@@ -142,6 +142,7 @@ import { useProgressStore } from '../stores/progressStore.js'
 import { useSoundStore }    from '../stores/soundStore.js'
 import { basicTasks }       from '../validators/basic.js'
 import { advancedTasks }    from '../validators/advanced.js'
+import BackToHQ from "../components/BackToHQ.vue";
 
 const route         = useRoute()
 const router        = useRouter()
