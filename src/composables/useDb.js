@@ -240,12 +240,15 @@ export function useDb() {
     return {
         async exec(rawSql) {
             await _seedPromise
-            const stmts = splitStatements(rewrite(rawSql.trim()))
+
+            const stmts = splitStatements(rawSql.trim())
+
             let last = []
             for (const stmt of stmts) {
                 if (!stmt) continue
+                const rewritten = rewrite(stmt)
                 try {
-                    const r = _db(stmt)
+                    const r = _db(rewritten)
                     last = Array.isArray(r) ? normalise(r) : []
                 } catch (e) {
                     throw new Error(`${e.message}\n→ near: ${stmt.slice(0, 120)}`)

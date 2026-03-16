@@ -335,6 +335,10 @@ function submitAnswer() {
     })
     storyCollapsed.value = true
     wrongFeedback.value  = ''
+
+    if (isLastTask.value) {
+      timerStore.pause()
+    }
   } else {
     soundStore.play('wrong')
     wrongFeedback.value = typeof validation === 'string'
@@ -423,10 +427,13 @@ onMounted(() => {
 })
 
 function resetProgress() {
-  if (confirm("Reset all progress?")) {
+  if (confirm('Reset all progress for this track?')) {
     progressStore.reset(mode.value)
     timerStore.reset()
     clearEditor()
+
+    router.replace({ name: 'task', params: { mode: mode.value, id: 1 } })
   }
 }
+
 </script>
