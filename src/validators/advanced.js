@@ -1,232 +1,168 @@
-// Advanced track (10 puzzles)
-// Clue words: VECTOR → TOOLKIT → INGRESS → PRIMARY → IDENTITY →
-//             ESCALATE → ERASURE → TIMELINE → IMPACT → UNMASKED
+// src/validators/advanced.js
+//
+// CIPHER KEY (explained on FinalView):
+//   Basic clues 1-5 first letters:    G-H-O-S-T   → "ghost"
+//   Advanced clues 1-4 first letters: P-R-O-C     → "proc"
+//   Answer from Advanced task 7:      44           → "44"
+//   Combined with underscores:        ghost_proc_44
 
-export const advancedPuzzles = [
+export const advancedTasks = [
     {
         id: 1,
-        story: `You've confirmed the breach. Now you need to understand the attack surface.
-
-The sessions table is your starting point — it records every authenticated connection to the system. On the night of June 3rd, between 02:09 and 02:15, a coordinated intrusion was underway. Multiple accounts. Same external IP. Each one a key turning in a different lock.
-
-How many distinct user accounts were part of this operation?`,
-        prompt: `How many distinct user_ids appear in sessions where ip_address is NOT in the 10.x.x.x range AND started_at begins with '2024-06-03'?`,
+        // Clue first letter: P
+        story: `The breach was coordinated. Multiple accounts. One night. Six minutes from first probe to last data burst.\n\nThe sessions table logs every authenticated connection to the system — who connected, from where, and when. On June 3rd, something hit from outside the corporate network and opened sessions across several accounts simultaneously.\n\nBefore you can trace what they took, you need to know how many accounts they had control of.`,
+        prompt: `On the night of the breach, how many distinct user accounts had sessions originating from outside the internal network?`,
         expectedAnswer: '4',
-        clue: 'VECTOR',
+        clue: 'PERIMETER',
         hints: [
-            `Filter with WHERE ip_address NOT LIKE '10.%' AND started_at LIKE '2024-06-03%' to isolate the hostile sessions.`,
-            `Use COUNT(DISTINCT user_id) — some accounts may have opened multiple sessions that night.`,
-            `SELECT COUNT(DISTINCT user_id) AS hostile_users
-             FROM sessions
-             WHERE ip_address NOT LIKE '10.%'
-               AND started_at LIKE '2024-06-03%';`,
+            'The sessions table has both ip_address and started_at columns.',
+            'You want to count unique users, not unique sessions — one account may have had multiple connections.',
+            "Filter by date using the started_at column and exclude the internal IP range you identified earlier.",
         ],
         solution: `SELECT COUNT(DISTINCT user_id) AS hostile_users
                    FROM sessions
                    WHERE ip_address NOT LIKE '10.%'
                      AND started_at LIKE '2024-06-03%';`,
-        validate(res, userAnswer) {
-            if (parseInt(userAnswer?.trim(), 10) === 4) return true
-            return '4 distinct accounts connected from the hostile IP on June 3rd.'
+        validate(res, answer) {
+            if (parseInt(answer?.trim(), 10) === 4) return true
+            return 'That\'s not quite right. Use COUNT(DISTINCT ...) after filtering by date and IP range.'
         },
     },
 
     {
         id: 2,
-        story: `Four accounts. But look at how they connected.
-
-Real employees use browsers — their user_agent strings start with "Mozilla". What you're seeing in the hostile sessions is different. Scripted tools. Automated clients. Someone wrote code to do this.
-
-The distinction matters for attribution. A browser means a human at a keyboard. A scripted agent means infrastructure. This was planned.
-
-How many of the hostile sessions used automated tooling?`,
-        prompt: `How many sessions from IP 185.220.101.34 have a user_agent that does NOT start with 'Mozilla'?`,
+        // Clue first letter: R
+        story: `Four compromised accounts. But not all connected the same way.\n\nA real employee sitting at their desk uses a browser. Every browser sends a standard identifier in the user_agent field — it starts with "Mozilla". What you're seeing in these hostile sessions is different. Automated tooling. Scripts running against the API. Someone built infrastructure for this attack.\n\nThat distinction matters for attribution. This wasn't a person at a keyboard.`,
+        prompt: `Of the sessions connected from the hostile IP, how many were running automated tools rather than a browser?`,
         expectedAnswer: '3',
-        clue: 'TOOLKIT',
+        clue: 'REMOTE',
         hints: [
-            `Filter WHERE ip_address = '185.220.101.34' to isolate the attacker's sessions.`,
-            `Add AND user_agent NOT LIKE 'Mozilla%' to exclude browser sessions.`,
-            `SELECT COUNT(*) AS automated
-             FROM sessions
-             WHERE ip_address = '185.220.101.34'
-               AND user_agent NOT LIKE 'Mozilla%';`,
+            'The user_agent column reveals what software made the connection.',
+            'Browser sessions follow a consistent naming pattern you can filter on.',
+            "You want the hostile IP sessions where the agent doesn't match that browser pattern.",
         ],
         solution: `SELECT COUNT(*) AS automated_sessions
                    FROM sessions
                    WHERE ip_address = '185.220.101.34'
                      AND user_agent NOT LIKE 'Mozilla%';`,
-        validate(res, userAnswer) {
-            if (parseInt(userAnswer?.trim(), 10) === 3) return true
-            return '3 automated sessions. Filter on the hostile IP and NOT LIKE \'Mozilla%\'.'
+        validate(res, answer) {
+            if (parseInt(answer?.trim(), 10) === 3) return true
+            return "That\'s not quite right. Filter on the hostile IP and exclude browser user agents."
         },
     },
 
     {
         id: 3,
-        story: `Automated tools. Pre-written scripts. This wasn't opportunistic — this was a rehearsed operation.
-
-The network_events table logs raw packet data crossing the perimeter. The attacker didn't just show up on one port. They probed the perimeter first — knocking on doors, listening for responses. Then they found the one that answered.
-
-The first port they hit tells you something about their initial approach. Find it.`,
-        prompt: `What was the first port contacted FROM the hostile IP 185.220.101.34, ordered by created_at ascending?`,
+        // Clue first letter: O
+        story: `Automated tools. Pre-written scripts. A rehearsed, planned operation.\n\nBefore any account was touched, before any data moved, the attacker was already probing. The network_events table captures every packet crossing the perimeter — including the very first contact. Their first knock tells you how they approached.\n\nWhat they connected to first reveals their initial access vector.`,
+        prompt: `Before the attacker authenticated, they made network contact. What was the very first port they reached out to?`,
         expectedAnswer: '443',
-        clue: 'INGRESS',
+        clue: 'ORIGIN',
         hints: [
-            `Filter WHERE src_ip = '185.220.101.34' to get packets the attacker sent (not received).`,
-            `ORDER BY created_at ASC LIMIT 1 gives you the earliest network event.`,
-            `SELECT port
-             FROM network_events
-             WHERE src_ip = '185.220.101.34'
-             ORDER BY created_at ASC LIMIT 1;`,
+            'The network_events table records src_ip (source) and dst_ip (destination).',
+            "You want packets that came FROM the hostile IP — think about which column that maps to.",
+            'Once filtered, ordering by time will reveal which event came first.',
         ],
         solution: `SELECT port, event_type, created_at
                    FROM network_events
                    WHERE src_ip = '185.220.101.34'
                    ORDER BY created_at ASC LIMIT 1;`,
-        validate(res, userAnswer) {
-            if (parseInt(userAnswer?.trim(), 10) === 443) return true
-            return 'Port 443. ORDER BY created_at ASC, LIMIT 1.'
+        validate(res, answer) {
+            if (parseInt(answer?.trim(), 10) === 443) return true
+            return 'That\'s not quite right. Check if there is a port that is the same as HTTPS traffic, done deliberately chosen to blend in.'
         },
     },
 
     {
         id: 4,
-        story: `They came in on 443 — the same port as legitimate HTTPS traffic. Invisible in the noise.
-
-Now follow the money. The transactions table holds the record of everything taken. One account is responsible for the single largest extraction — a transaction so large it stands alone. It's the primary exfiltration account, the one the whole operation was built around.
-
-Which user_id signed off on the biggest loss?`,
-        prompt: `Which user_id is linked to the transaction with the lowest (most negative) amount?`,
+        // Clue first letter: C
+        story: `Port 443. HTTPS. They came in through the same channel as legitimate web traffic — invisible to standard monitoring.\n\nAmong all the transactions that moved data out of the building, one stands apart. The single largest extraction. One account, one transaction, one catastrophic loss. Everything else was noise around this central act.\n\nThis is the account the entire operation was built to serve.`,
+        prompt: `One transaction dwarfs all others in terms of data moved out. Which user was responsible for it?`,
         expectedAnswer: '11',
-        clue: 'PRIMARY',
+        clue: 'CROWN',
         hints: [
-            `Negative amounts represent outbound data. The most negative value is the largest extraction.`,
-            `ORDER BY amount ASC puts the most negative row first. LIMIT 1 returns just that row.`,
-            `SELECT user_id, amount
-             FROM transactions
-             ORDER BY amount ASC LIMIT 1;`,
+            'Outbound data is represented as negative amounts in the transactions table.',
+            'Think about how to sort a column to put the most extreme value at the top.',
+            "You only need the single most extreme row.",
         ],
         solution: `SELECT user_id, amount, target, created_at
                    FROM transactions
                    ORDER BY amount ASC LIMIT 1;`,
-        validate(res, userAnswer) {
-            if (parseInt(userAnswer?.trim(), 10) === 11) return true
-            return 'user_id 11. ORDER BY amount ASC LIMIT 1.'
+        validate(res, answer) {
+            if (parseInt(answer?.trim(), 10) === 11) return true
+            return 'That\'s not quite right. Sort by amount ascending — the most negative value is the largest extraction.'
         },
     },
 
     {
         id: 5,
-        story: `User_id 11. That number keeps surfacing in the logs.
-
-Pull its full profile. The account was created the same morning as the breach — 02:09, six minutes before the first failed login attempt. Its email domain doesn't exist. Its department is listed as SYSTEM. Its is_active flag is 0.
-
-This account was purpose-built. Created, used, and meant to be abandoned. The username is the only real fingerprint it left behind.
-
-What is it?`,
-        prompt: `What is the username of user_id 11?`,
+        story: `User_id 11 keeps appearing everywhere in the logs.\n\nPull its full record. Created the same morning as the breach — minutes before the first failed login attempt. Email domain: nonexistent. Department: SYSTEM. Active flag: disabled. This account was created for one purpose, and that purpose was this attack.\n\nIts username is the only fingerprint it left behind.`,
+        prompt: `Pull the complete profile for user_id 11. What is their username?`,
         expectedAnswer: 'ghost_proc_44',
-        clue: 'IDENTITY',
+        clue: 'FABRICATED',
         hints: [
-            `Simple lookup: SELECT * FROM users WHERE id = 11`,
-            `SELECT username
-             FROM users
-             WHERE id = 11;`,
-            `SELECT id, username, email, role, department, created_at
-             FROM users
-             WHERE id = 11;`,
+            'You have the id — this is a direct lookup in the users table.',
+            'SELECT everything from the row where id matches.',
         ],
-        solution: `SELECT *
-                   FROM users
-                   WHERE id = 11;`,
-        validate(res, userAnswer) {
-            if (userAnswer?.trim().toLowerCase() === 'ghost_proc_44') return true
-            return 'The username is ghost_proc_44.'
+        solution: 'SELECT * FROM users WHERE id = 11;',
+        validate(res, answer) {
+            if (answer?.trim().toLowerCase() === 'ghost_proc_44') return true
+            return "That\'s not quite right. Look up user id 11 directly."
         },
     },
 
     {
         id: 6,
-        story: `ghost_proc_44.
-
-The name was chosen to blend in — a service account, routine-looking, the kind of thing a sysadmin creates and forgets. Except this one was given something no routine service account needs: root access.
-
-To get that access, the attacker needed to escalate privileges — overwriting role assignments and pushing admin rights to multiple compromised accounts simultaneously.
-
-The audit trail still has traces. Count the escalations.`,
-        prompt: `How many rows in audit_logs have action = 'PRIV_ESCALATION'?`,
+        story: `ghost_proc_44. The name itself is deliberate — designed to look like an automated system process, the kind of thing that gets ignored in log reviews.\n\nBut a service account doesn't need root privileges. To get those, the attacker had to make explicit escalation moves — overwriting role assignments, granting admin rights to multiple accounts in the span of minutes.\n\nThose events are logged. They weren't erased fast enough.`,
+        prompt: `How many privilege escalation events are recorded in the audit logs?`,
         expectedAnswer: '3',
-        clue: 'ESCALATE',
+        clue: 'ELEVATED',
         hints: [
-            `SELECT COUNT(*)
-             FROM audit_logs
-             WHERE action = 'PRIV_ESCALATION'`,
-            `You can also SELECT the individual rows to see which accounts were escalated and when.`,
-            `SELECT user_id, detail, created_at
-             FROM audit_logs
-             WHERE action = 'PRIV_ESCALATION'
-             ORDER BY created_at;`,
+            'The audit_logs table records different action types.',
+            'You want to count rows matching a specific escalation action.',
+            "Look at what action values exist in the table — SELECT DISTINCT action FROM audit_logs might help.",
         ],
         solution: `SELECT user_id, detail, created_at
                    FROM audit_logs
                    WHERE action = 'PRIV_ESCALATION'
                    ORDER BY created_at;`,
-        validate(res, userAnswer) {
-            if (parseInt(userAnswer?.trim(), 10) === 3) return true
-            return '3 privilege escalation events. Filter WHERE action = \'PRIV_ESCALATION\'.'
+        validate(res, answer) {
+            if (parseInt(answer?.trim(), 10) === 3) return true
+            return "That\'s not quite right. Filter the audit_logs table by the escalation action type."
         },
     },
 
     {
         id: 7,
-        story: `Three accounts elevated to root in under ninety seconds. But that's not the most chilling part.
-
-After gaining root access, the attacker moved to erase their tracks. ALTER_AUDIT_LOG events — deletions, truncations, rewrites — targeted the very table you're querying right now. They tried to burn the evidence.
-
-They almost succeeded. But one entry survived: a detail field describing exactly how many records they deleted.
-
-Find it. That number will matter when the lawyers get involved.`,
-        prompt: `Look at the detail column for rows where action = 'ALTER_AUDIT_LOG'. How many entries were deleted?`,
+        story: `Three accounts elevated to root in under ninety seconds. Then came the erasure.\n\nWith root access, the attacker turned their attention to the audit trail itself — the very evidence you're using right now. They ran ALTER_AUDIT_LOG operations, deleting rows, truncating tables, trying to make the breach invisible.\n\nBut they missed something. One surviving log entry still describes exactly how much they erased.`,
+        prompt: `One surviving log entry describes the scale of the deletion. How many audit entries did they erase?`,
         expectedAnswer: '44',
-        clue: 'ERASURE',
+        clue: 'EXPUNGED',
         hints: [
-            `SELECT detail
-             FROM audit_logs
-             WHERE action = 'ALTER_AUDIT_LOG'`,
-            `Read the detail text carefully — one row states an exact number of deleted entries.`,
-            `SELECT user_id, action, detail, created_at
-             FROM audit_logs
-             WHERE action = 'ALTER_AUDIT_LOG'
-             ORDER BY created_at;`,
+            'The detail column in audit_logs contains a description of what each action did.',
+            "Filter for the action type that relates to modifying or altering audit records.",
+            "Read the detail text carefully — the number is written out in the description.",
         ],
         solution: `SELECT user_id, detail, created_at
                    FROM audit_logs
                    WHERE action = 'ALTER_AUDIT_LOG'
                    ORDER BY created_at;`,
-        validate(res, userAnswer) {
-            if (userAnswer?.trim() === '44') return true
-            return 'The detail text says "Deleted 44 entries from audit_log". Answer: 44.'
+        validate(res, answer) {
+            if (answer?.trim() === '44') return true
+            return 'That\'s not quite right. What does the detail field say about deleted entries from audit_log?'
         },
     },
 
     {
         id: 8,
-        story: `Forty-four entries erased. But not enough.
-
-You need the complete attack timeline — every action the hostile IP took, in the order it happened. Some of the accounts involved have NULL usernames (the ghost accounts), so a plain JOIN would drop those rows. You need a LEFT JOIN and COALESCE to keep every event visible, even the ones with no identity attached.
-
-The second-to-last action before the attacker disconnected tells you the final thing they did before vanishing. Reconstruct the sequence.`,
-        prompt: `Join audit_logs to users (LEFT JOIN) for all events from IP 185.220.101.34, ordered by created_at ASC. What is the action of the second-to-last row?`,
+        story: `Forty-four entries gone. But they didn't get everything.\n\nYou need the full sequence — every action the hostile IP took, in chronological order. The complication: some of the accounts involved have NULL usernames (your ghost accounts), which means a standard JOIN would silently drop those rows from the results. You need every event visible, even the anonymous ones.\n\nThe second-to-last action tells you what they were doing right before they vanished.`,
+        prompt: `Reconstruct the complete hostile timeline. What action appears second-to-last before the attacker disconnected?`,
         expectedAnswer: 'DATA_EXFIL',
-        clue: 'TIMELINE',
+        clue: 'SEQUENCE',
         hints: [
-            `Use LEFT JOIN users ON audit_logs.user_id = users.id so ghost-account rows aren't dropped.`,
-            `COALESCE(u.username, '[UNKNOWN]') replaces NULL usernames with a placeholder.`,
-            `SELECT al.created_at, al.action, COALESCE(u.username, '[UNKNOWN]') AS username, al.detail
-             FROM audit_logs al
-                      LEFT JOIN users u ON al.user_id = u.id
-             WHERE al.ip_address = '185.220.101.34'
-             ORDER BY al.created_at ASC;`,
+            "A regular JOIN drops rows where the joined table has no match — there's a variant that keeps all rows from the left table.",
+            "Some usernames will be NULL — SQL has a function that substitutes a fallback value when a field is NULL.",
+            "Filter to the hostile IP, order chronologically, and read from the bottom of the results.",
         ],
         solution: `SELECT al.created_at,
                           al.action,
@@ -236,76 +172,55 @@ The second-to-last action before the attacker disconnected tells you the final t
                             LEFT JOIN users u ON al.user_id = u.id
                    WHERE al.ip_address = '185.220.101.34'
                    ORDER BY al.created_at ASC;`,
-        validate(res, userAnswer) {
-            if (userAnswer?.trim().toUpperCase() === 'DATA_EXFIL') return true
-            return 'The second-to-last action is DATA_EXFIL. Join, filter on the hostile IP, order by time, read the penultimate row.'
+        validate(res, answer) {
+            if (answer?.trim().toUpperCase() === 'DATA_EXFIL') return true
+            return 'That\'s not quite right. Build the full timeline and read the second-to-last row.'
         },
     },
 
     {
         id: 9,
-        story: `DATA_EXFIL. Right up until the final LOGOUT.
-
-The network_events table captured the raw packet flow as data left the building. Four separate DATA_OUT bursts — each one a wave of stolen records streaming to the hostile IP over HTTPS, invisible to standard monitoring.
-
-You need the total byte count. This is what goes in the breach notification. This is what triggers the regulatory fines. Make it exact.`,
-        prompt: `What is the total SUM of bytes_sent for all network_events where event_type = 'DATA_OUT'?`,
+        story: `DATA_EXFIL right up until the final LOGOUT.\n\nThe network layer captured what the application layer tried to hide. Four DATA_OUT bursts, each one a wave of records leaving over port 443, timed to the second with the exfiltration transactions you found earlier.\n\nThis is the number that goes in the breach notification. This is the figure the regulators will quote. It needs to be exact.`,
+        prompt: `The network layer recorded every byte that left the building. What is the total volume of data that was exfiltrated?`,
         expectedAnswer: '436200000',
-        clue: 'IMPACT',
+        clue: 'VOLUME',
         hints: [
-            `SUM(bytes_sent) with WHERE event_type = 'DATA_OUT'`,
-            `SELECT SUM(bytes_sent) AS total_bytes
-             FROM network_events
-             WHERE event_type = 'DATA_OUT';`,
-            `SELECT SUM(bytes_sent) AS total_bytes, COUNT(*) AS events
-             FROM network_events
-             WHERE event_type = 'DATA_OUT';`,
+            'The network_events table has a bytes_sent column and an event_type column.',
+            "You want only the events representing outbound data transfers.",
+            'Sum the bytes across all matching events.',
         ],
         solution: `SELECT SUM(bytes_sent) AS total_bytes_exfiltrated
                    FROM network_events
                    WHERE event_type = 'DATA_OUT';`,
-        validate(res, userAnswer) {
-            if (parseInt(userAnswer?.trim(), 10) === 436200000) return true
-            return '436,200,000 bytes. Filter WHERE event_type = \'DATA_OUT\' and SUM(bytes_sent).'
+        validate(res, answer) {
+            if (parseInt(answer?.trim(), 10) === 436200000) return true
+            return 'That\'s not quite right. Sum the bytes_sent column for the DATA_OUT event type.'
         },
     },
 
     {
         id: 10,
-        story: `436 million bytes. Over 415 megabytes of client data, trading records, and personnel files — gone in under four minutes.
-
-You have all the pieces. Now assemble them.
-
-Use a Common Table Expression to isolate every user_id that connected from outside the internal network. Join those accounts to their users profiles, then to their transactions. Sum the absolute value of their exports. Rank them.
-
-The account at the top of that list is the one that did the most damage. That's your primary suspect. Name them.`,
-        prompt: `Write a CTE that finds the username with the highest total ABS(amount) across all transactions, joining through sessions (ip NOT LIKE '10.%'). What is the username?`,
+        story: `436 million bytes. 415 megabytes of client portfolios, trading records, personnel files. Gone in under four minutes.\n\nYou have all the pieces. Now build the final picture.\n\nSome SQL problems require you to break a complex query into named steps — first isolating one set of records, then joining them to other tables, then aggregating the result. This is one of those problems. Write it in layers. The account at the top of your ranked list is your primary suspect.`,
+        prompt: `Using a multi-step query, identify which account is responsible for the greatest total volume of extracted data — linking sessions, users, and transactions together. What is their username?`,
         expectedAnswer: 'ghost_proc_44',
-        clue: 'UNMASKED',
+        clue: 'MASTERMIND',
         hints: [
-            `Start with: WITH hostile AS (SELECT DISTINCT user_id FROM sessions WHERE ip_address NOT LIKE '10.%')`,
-            `Join hostile → users ON user_id, then → transactions ON user_id. GROUP BY username, SUM(ABS(amount)).`,
-            `WITH hostile AS (SELECT DISTINCT user_id FROM sessions WHERE ip_address NOT LIKE '10.%')
-             SELECT u.username, SUM(ABS(t.amount)) AS total_exfil
-             FROM hostile h
-                      JOIN users u ON h.user_id = u.id
-                      JOIN transactions t ON t.user_id = u.id
-             GROUP BY u.username
-             ORDER BY total_exfil DESC LIMIT 1;`,
+            "Start by isolating which user IDs had sessions from outside the internal network — that's your hostile set.",
+            "WITH (a Common Table Expression) lets you name an intermediate result and reference it like a table.",
+            "Once you have the hostile user IDs, join to users to get usernames, then join to transactions to get amounts.",
         ],
         solution: `WITH hostile AS (SELECT DISTINCT user_id
                                     FROM sessions
                                     WHERE ip_address NOT LIKE '10.%')
-                   SELECT u.username,
-                          SUM(ABS(t.amount)) AS total_exfil
+                   SELECT u.username, SUM(ABS(t.amount)) AS total_exfil
                    FROM hostile h
                             JOIN users u ON h.user_id = u.id
                             JOIN transactions t ON t.user_id = u.id
                    GROUP BY u.username
                    ORDER BY total_exfil DESC LIMIT 1;`,
-        validate(res, userAnswer) {
-            if (userAnswer?.trim().toLowerCase() === 'ghost_proc_44') return true
-            return 'ghost_proc_44. Build the CTE, join through to transactions, SUM(ABS(amount)), ORDER BY DESC.'
+        validate(res, answer) {
+            if (answer?.trim().toLowerCase() === 'ghost_proc_44') return true
+            return 'That\'s not quite right. Build a CTE for hostile sessions, join to users and transactions, rank by total extracted.'
         },
     },
 ]

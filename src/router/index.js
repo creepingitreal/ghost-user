@@ -1,35 +1,26 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import PuzzleView from '../views/PuzzleView.vue'
-import FinalView from '../views/FinalView.vue'
+import {createRouter, createWebHashHistory } from 'vue-router'
 import { pinia } from '../plugins/pinia'
 import { useProgressStore } from '../stores/progressStore'
+import HomeView from '../views/HomeView.vue'
+import TaskView from '../views/TaskView.vue'
+import FinalView from '../views/FinalView.vue'
 import SplashView from "../views/SplashView.vue";
 
 const routes = [
-    {
-        path: '/',
-        name: 'splash',
-        component: SplashView,
-    },
-    { path: '/home', name: 'home', component: HomeView },
-    { path: '/:mode(basic|advanced)/:id(\\d+)', name: 'puzzle', component: PuzzleView, props: true },
+    { path: '/', name: '/', component: SplashView },
+    { path: '/briefing-room', name: 'home', component: HomeView },
+    { path: '/:mode(basic|advanced)/:id(\\d+)', name: 'task', component: TaskView, props: true },
     { path: '/:mode(basic|advanced)/final', name: 'final', component: FinalView, props: true },
-    { path: '/:pathMatch(.*)*', redirect: '/' },
-    {
-        path: '/final',
-        name: 'final',
-        component: FinalView,
-    },
+    { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 
 const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL),
+    history: createWebHashHistory(import.meta.env.BASE_URL),
     routes
 })
 
 router.beforeEach((to) => {
-    if (to.name !== 'puzzle') return true
+    if (to.name !== 'task') return true
 
     const mode = to.params.mode
     const id = Number(to.params.id)
@@ -39,7 +30,7 @@ router.beforeEach((to) => {
 
     return progress.isUnlocked(mode, id)
         ? true
-        : { name: 'puzzle', params: { mode, id: id - 1 } }
+        : { name: 'task', params: { mode, id: id - 1 } }
 })
 
 export default router

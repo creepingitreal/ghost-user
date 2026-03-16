@@ -1,143 +1,117 @@
-// Basic track (5 puzzles)
-// Each puzzle: story, prompt, hints[], solution (SQL), validate()
-// clue words spell: RECON → PHANTOM → EXODUS → BREACH → TRACED
+// src/validators/basic.js
+// Clue first letters spell: G · H · O · S · T
+// Combined with advanced clues 1-4 (P·R·O·C) + the number from adv task 7 (44):
+//   GHOST + _ + PROC + _ + 44 = ghost_proc_44
 
-export const basicPuzzles = [
+export const basicTasks = [
     {
         id: 1,
-        story: `03:47. The call woke you from a dead sleep.
-"We've been hit." Your CISO's voice was flat. Controlled. Worse than panic.
-
-Nexus Financial's core database — the one holding 15 years of client portfolios, trading histories, and personnel records — was accessed by something that shouldn't exist. No alarm triggered. No access log flagged. Whatever got in, it knew exactly where to look.
-
-You have a read-only mirror of the database and six hours before the regulators arrive.
-
-Start at the beginning. Before you can trace what was taken, you need to know what exists. Map the database. Find every table, then inspect the structure of the users table.`,
-        prompt: `Run SHOW TABLES to list all tables, then DESCRIBE users to inspect its structure. How many columns does the users table have?`,
+        // Clue first letter: G
+        story: `03:47. The call drags you out of a dead sleep.\n\n"We've been hit." Your CISO's voice is flat. Controlled. That's worse than panic.\n\nNexus Financial's production database — 15 years of client portfolios, trading histories, personnel records — was accessed by something that has no right to exist in your systems. No alarm fired. No access log flagged it. Whatever got in knew exactly where to look.\n\nYou have a read-only forensic mirror and six hours before the regulators arrive. You know nothing yet. Start at the beginning.`,
+        prompt: `You're staring at a database you've never seen before. Before you can find anything, you need to know what you're working with. What tables exist, and what does the structure of the users table look like?`,
         expectedAnswer: '8',
-        clue: 'RECON',
+        clue: 'GROUNDWORK',
         hints: [
-            `In MySQL, SHOW TABLES lists every table in the current database. Try it first.`,
-            `After seeing the tables, use DESCRIBE users — it returns one row per column, showing the field name and data type.`,
-            `SHOW TABLES;\nDESCRIBE users;`,
+            'MySQL has a command that lists all tables in the current database.',
+            'Once you know the tables, there\'s a MySQL command that shows the columns of a specific table.',
+            'You\'re looking for two separate commands — one to explore, one to inspect.',
         ],
-        solution: `SHOW TABLES;\nDESCRIBE users;`,
-        validate(res, userAnswer) {
-            if (parseInt(userAnswer?.trim(), 10) === 8) return true
-            return 'The users table has 8 columns. Run DESCRIBE users and count the rows returned.'
+        solution: 'SHOW TABLES;\nDESCRIBE users;',
+        validate(res, answer) {
+            if (parseInt(answer?.trim(), 10) === 8) return true
+            return 'Count the rows returned by DESCRIBE users — each row is one column.'
         },
     },
 
     {
         id: 2,
-        story: `The table map is in your hands. Five tables. Thousands of rows. Somewhere inside is the shape of the intruder.
-
-You pull up the users table. Something's wrong immediately. Real employees have names, emails, departments. But several rows are hollow — critical identity fields missing entirely. NULL where there should be a person.
-
-These aren't accidents. Someone inserted ghost accounts: records with just enough presence to authenticate, but no paper trail to follow. The cover was almost perfect.
-
-Count them. How many users have missing identity data?`,
-        prompt: `Count how many users have a NULL value in username, email, OR department.`,
+        // Clue first letter: H
+        story: `The schema is in front of you. Five tables. Thousands of rows.\n\nYou scan the users table and something's immediately wrong. Real employees have names, emails, departments. But several rows are hollow — critical identity fields missing entirely. NULL where a person should be.\n\nThese aren't data entry errors. Someone deliberately inserted accounts with just enough presence to authenticate but no traceable identity. They wanted to be invisible.`,
+        prompt: `Something in the users table doesn't add up. Some records are missing the identity fields that every real employee should have. How many users are they?`,
         expectedAnswer: '3',
-        clue: 'PHANTOM',
+        clue: 'HOLLOW',
         hints: [
-            `Use WHERE with IS NULL conditions. You need rows where ANY of the three fields is missing — connect them with OR.`,
-            `SELECT COUNT(*) FROM users WHERE username IS NULL OR email IS NULL OR department IS NULL`,
-            `SELECT COUNT(*) AS ghost_accounts\nFROM users\nWHERE username IS NULL\n   OR email IS NULL\n   OR department IS NULL;`,
+            'Look at the columns that identify a person: username, email, department.',
+            'A missing value in SQL is represented by NULL — there\'s a specific operator to test for it.',
+            'You need to find rows where ANY of those three fields is missing, not all of them.',
         ],
         solution: `SELECT COUNT(*) AS ghost_accounts
-FROM users
-WHERE username IS NULL
-   OR email IS NULL
-   OR department IS NULL;`,
-        validate(res, userAnswer) {
-            if (parseInt(userAnswer?.trim(), 10) === 3) return true
-            if (res?.[0]?.values?.[0]?.[0] === 3) return true
-            return '3 ghost accounts exist. Make sure you\'re connecting each IS NULL condition with OR, not AND.'
+                   FROM users
+                   WHERE username IS NULL
+                      OR email IS NULL
+                      OR department IS NULL;`,
+        validate(res, answer) {
+            if (parseInt(answer?.trim(), 10) === 3) return true
+            return "That\'s not quite right. Check that you're looking for NULL in any of the three identity columns."
         },
     },
 
     {
         id: 3,
-        story: `Three ghost accounts. But ghosts don't steal data — they carry it out.
-
-You move to the transactions table. The money flows look normal at first glance — transfers, reads, deploys. Then you see them: a cluster of data_export entries with negative amounts. In this system, negative means outbound. Data leaving.
-
-The transactions are timestamped to a single night. The amounts are staggering.
-
-Add them up. You need the total to put in the incident report — and to understand the true scale of what happened.`,
-        prompt: `What is the total SUM of the amount column for all transactions where type = 'data_export'?`,
+        // Clue first letter: O
+        story: `Three ghost accounts seeded before the attack. But they're just the keys — what matters is what was taken.\n\nThe transactions table tells the real story. Most entries look routine: reads, deploys, transfers. But buried in the noise is a pattern you've seen before in financial exfiltration cases. Negative amounts. Outbound flows. A type of transaction that only runs when data is being moved somewhere it shouldn't go.\n\nThe scale of it, when you add it up, is going to make headlines.`,
+        prompt: `Hidden in the transactions are records of data leaving the system. The amounts are negative — outbound. What is the total value that moved out?`,
         expectedAnswer: '-436200',
-        clue: 'EXODUS',
+        clue: 'OUTFLOW',
         hints: [
-            `Use SUM() on the amount column with a WHERE clause filtering by type.`,
-            `SELECT SUM(amount) FROM transactions WHERE type = 'data_export'`,
-            `SELECT SUM(amount) AS total_exported\nFROM transactions\nWHERE type = 'data_export';`,
+            "The transaction type you're interested in contains the word 'export'.",
+            'SQL has an aggregate function that adds up a column — useful when you need a total.',
+            "Filter the transactions table to only the relevant type, then sum the amount column.",
         ],
         solution: `SELECT SUM(amount) AS total_exported
-FROM transactions
-WHERE type = 'data_export';`,
-        validate(res, userAnswer) {
-            const clean = userAnswer?.trim().replace(/\s/g, '')
-            if (['-436200','-436200.0','-436200.00'].includes(clean)) return true
+                   FROM transactions
+                   WHERE type = 'data_export';`,
+        validate(res, answer) {
+            const clean = answer?.trim().replace(/\s/g, '')
+            if (['-436200', '-436200.0', '-436200.00'].includes(clean)) return true
             const val = res?.[0]?.values?.[0]?.[0]
             if (val === -436200 || val === -436200.0) return true
-            return 'The total is -436200. Filter WHERE type = \'data_export\' and use SUM(amount).'
+            return 'That\'s not quite right. Make sure you\'re only summing the relevant transaction type.'
         },
     },
 
     {
         id: 4,
-        story: `$436,200 in data value. Gone in under four minutes.
-
-But before the attacker could export anything, they needed in. You check the audit_logs table and find the fingerprints of a brute-force attempt — a cascade of FAILED_LOGIN entries hammering a single account in rapid succession.
-
-Standard lockout policy should have blocked this after three attempts. It didn't. Either the policy was bypassed — or someone on the inside disabled it.
-
-Find which user_id was targeted in the brute-force, and how many times they failed.`,
-        prompt: `Which user_id has the most FAILED_LOGIN entries in audit_logs? Submit your answer as user_id:count (e.g. 2:5).`,
+        // Clue first letter: S
+        story: `$436,200 of data value extracted in under four minutes.\n\nBefore any of that could happen, the attacker needed a way in. The audit log captures everything — including the failed attempts that came before the successful one. Someone was hammering an account door.\n\nNormal security policy should have triggered a lockout. It didn't. That tells you something about what happened on the inside — but first, find the account they were targeting.`,
+        prompt: `The audit logs contain traces of a brute-force attempt before the breach. Which account was targeted, and how many failed attempts were logged against it?`,
         expectedAnswer: '4:3',
-        clue: 'BREACH',
+        clue: 'SIEGE',
         hints: [
-            `Filter WHERE action = 'FAILED_LOGIN', then GROUP BY user_id and COUNT(*) the rows.`,
-            `Add ORDER BY count DESC LIMIT 1 to find the account that was hit hardest.`,
-            `SELECT user_id, COUNT(*) AS attempts\nFROM audit_logs\nWHERE action = 'FAILED_LOGIN'\nGROUP BY user_id\nORDER BY attempts DESC\nLIMIT 1;`,
+            'The audit_logs table records the type of each action — look for failed authentication events.',
+            'Once filtered, you can count how many times each user appears using GROUP BY.',
+            'To find the worst-hit account, consider how to order your results.',
         ],
         solution: `SELECT user_id, COUNT(*) AS attempts
-FROM audit_logs
-WHERE action = 'FAILED_LOGIN'
-GROUP BY user_id
-ORDER BY attempts DESC
-LIMIT 1;`,
-        validate(res, userAnswer) {
-            if (userAnswer?.trim() === '4:3') return true
-            return 'Answer: 4:3 — user_id 4 was hammered 3 times. Format your answer as user_id:count.'
+                   FROM audit_logs
+                   WHERE action = 'FAILED_LOGIN'
+                   GROUP BY user_id
+                   ORDER BY attempts DESC
+                       LIMIT 1;`,
+        validate(res, answer) {
+            if (answer?.trim() === '4:3') return true
+            return 'Format your answer as user_id:count — e.g. 5:1 means user 4 had 1 failed attempts.'
         },
     },
 
     {
         id: 5,
-        story: `User_id 4's account was the door they kicked in.
-
-Every action in the logs — the failed logins, the successful bypass, the privilege escalation, the data exports — traces back to a single IP address. It's not internal. It doesn't belong to any employee, contractor, or vendor on record.
-
-One address. One attacker. Everything you need to build the case starts here.
-
-Find it.`,
-        prompt: `What external (non-10.x.x.x) IP address appears in the transactions table?`,
+        // Clue first letter: T
+        story: `User_id 4's account was the door they kicked in.\n\nEvery single hostile event in every log table traces back to one external address. Internal traffic uses a consistent IP range — your corporate network. Anything outside that range is either a remote worker, a vendor, or an attacker.\n\nThere are no scheduled external vendors. No authorised remote sessions logged for that night. Whatever IP you find sitting outside the internal range is the origin of this entire attack.`,
+        prompt: `Internal traffic comes from one IP range. Anything else is foreign. What external address appears in the transactions data?`,
         expectedAnswer: '185.220.101.34',
-        clue: 'TRACED',
+        clue: 'TRACER',
         hints: [
-            `Internal IPs all start with '10.' — use NOT LIKE '10.%' to exclude them.`,
-            `Wrap with SELECT DISTINCT so you get one row per unique IP, not one per transaction.`,
-            `SELECT DISTINCT ip_address\nFROM transactions\nWHERE ip_address NOT LIKE '10.%';`,
+            'Internal IPs follow a specific pattern — look at the ip_address column to see what format they use.',
+            'SQL has a pattern-matching operator that can filter strings by a prefix.',
+            'You want the addresses that do NOT match the internal pattern, and only unique values.',
         ],
         solution: `SELECT DISTINCT ip_address
-FROM transactions
-WHERE ip_address NOT LIKE '10.%';`,
-        validate(res, userAnswer) {
-            if (userAnswer?.trim() === '185.220.101.34') return true
-            return 'The hostile IP is 185.220.101.34. Use NOT LIKE \'10.%\' to filter out internal addresses.'
+                   FROM transactions
+                   WHERE ip_address NOT LIKE '10.%';`,
+        validate(res, answer) {
+            if (answer?.trim() === '185.220.101.34') return true
+            return "That\'s not quite right. Filter out the internal range and look for what's left."
         },
     },
 ]
