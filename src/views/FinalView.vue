@@ -3,38 +3,38 @@
     <div class="scanline" />
     <canvas ref="matrixCanvas" class="matrix" :class="{ active: stage === 'victory' }" />
 
-    <!-- ── BASIC COMPLETE ── intermediate screen → push to advanced -->
+    <!-- ── BASIC COMPLETE — intermediate screen ── -->
     <transition name="fade-out">
       <div v-if="stage === 'basic-complete'" class="debrief">
         <div class="db-header">
           <div class="eyebrow">OPERATION GHOST USER // BASIC TRACK COMPLETE</div>
           <h1 class="db-title green">FIELD ANALYSIS CONFIRMED</h1>
           <p class="db-sub">
-            You've proven your credentials, Analyst. But the case isn't closed.
-            The Ghost User is still at large. The Advanced Investigation awaits.
+            You've mapped the database, identified the ghost accounts, traced the data
+            outflow, found the entry point, and pinned the origin IP. Solid work —
+            but the case isn't closed. The identity of the person behind this operation
+            is still unknown. That requires the Advanced Investigation.
           </p>
         </div>
 
-        <div class="clue-grid">
-          <div v-for="(c, i) in basicClueObjs" :key="i" class="clue-cell" :class="c.earned ? 'earned' : 'locked'">
-            <div class="ci">B{{ String(i+1).padStart(2,'0') }}</div>
-            <div class="cw">{{ c.earned ? c.word : '░░░░░░░' }}</div>
+        <div class="evidence-block">
+          <div class="evidence-label">EVIDENCE COLLECTED — BASIC TRACK</div>
+          <div class="clue-grid">
+            <div v-for="(c, i) in basicClueObjs" :key="i" class="clue-cell" :class="c.earned ? 'earned' : 'locked'">
+              <div class="ci">B{{ String(i+1).padStart(2,'0') }}</div>
+              <div class="cw">{{ c.earned ? c.word : '░░░░░░░' }}</div>
+            </div>
           </div>
         </div>
 
-        <div class="cipher amber-cipher">
-          <span class="cipher-label">PRELIMINARY FINDINGS</span>
-          You've collected {{ basicEarned }}/5 basic clues. Take the first letter of each:
-          <strong class="cipher-letters">{{ basicFirstLetters }}</strong>
-          — this is only half the picture. The full perpetrator identity requires the Advanced track.
+        <div class="cipher">
+          <span class="cipher-label">WHAT COMES NEXT</span>
+          The Advanced Investigation goes deeper — sessions, network packets, privilege
+          escalation, and the complete attack timeline. At the end, you will identify
+          the suspect by name. The username is in the database. You'll find it.
         </div>
 
         <div class="input-section">
-          <div class="input-label">PARTIAL CODE CONFIRMED</div>
-          <p class="partial-note">
-            Your basic clues spell: <strong class="green">{{ basicFirstLetters }}</strong><br>
-            Complete the Advanced Investigation to reveal the full suspect identity.
-          </p>
           <button class="sub-btn" @click="goAdvanced">
             [ BEGIN ADVANCED INVESTIGATION → ]
           </button>
@@ -44,37 +44,42 @@
       </div>
     </transition>
 
-    <!-- ── ADVANCED DEBRIEF — solve the cipher ── -->
+    <!-- ── ADVANCED DEBRIEF — identify the suspect ── -->
     <transition name="fade-out">
       <div v-if="stage === 'debrief'" class="debrief">
         <div class="db-header">
           <div class="eyebrow">OPERATION GHOST USER // FINAL DEBRIEF</div>
-          <h1 class="db-title">CASE CLOSED?</h1>
+          <h1 class="db-title">IDENTIFY THE SUSPECT</h1>
           <p class="db-sub">
-            {{ earnedCount }} of {{ allClues.length }} clue fragments collected.
-            Assemble them. The perpetrator's identity is encoded in the sequence.
+            {{ earnedCount }} of {{ allClues.length }} evidence markers collected.
+            You've traced the breach from first probe to final logout. One question remains.
           </p>
         </div>
 
-        <div class="clue-grid">
-          <div v-for="(c, i) in allClues" :key="i" class="clue-cell" :class="c.earned ? 'earned' : 'locked'">
-            <div class="ci">{{ String(i+1).padStart(2,'0') }}</div>
-            <div class="cw">{{ c.earned ? c.word : '░░░░░░░' }}</div>
-            <div class="cs">{{ c.source }}</div>
+        <!-- Evidence trail -->
+        <div class="evidence-block">
+          <div class="evidence-label">FULL EVIDENCE TRAIL</div>
+          <div class="clue-grid">
+            <div v-for="(c, i) in allClues" :key="i" class="clue-cell" :class="c.earned ? 'earned' : 'locked'">
+              <div class="ci">{{ String(i+1).padStart(2,'0') }}</div>
+              <div class="cw">{{ c.earned ? c.word : '░░░░░░░' }}</div>
+              <div class="cs">{{ c.source }}</div>
+            </div>
           </div>
         </div>
 
+        <!-- Case summary -->
         <div class="cipher">
-          <span class="cipher-label">CIPHER KEY</span>
-          Take the <strong>first letter</strong> of each clue word in order.
-          The sequence spells the suspect's username.
-          <br><br>
-          <span class="cipher-example">
-            e.g. RECON → <strong>R</strong>, VECTOR → <strong>V</strong> ...
-            reading all first letters gives you the login handle.
-          </span>
+          <span class="cipher-label">CASE SUMMARY</span>
+          A coordinated intrusion on June 3rd. Four compromised accounts. Automated tooling.
+          Privilege escalation to root in under two minutes. 436 MB exfiltrated over HTTPS.
+          Forty-four audit entries erased to cover the trail.<br><br>
+          During the investigation you pulled a direct database record that revealed the
+          username of the primary account — the one purpose-built for this operation.
+          <strong>That username is the answer.</strong>
         </div>
 
+        <!-- Answer input -->
         <div class="input-section">
           <div class="input-label">SUSPECT USERNAME</div>
           <div class="input-row">
@@ -85,12 +90,13 @@
                 placeholder="enter username..."
                 @keyup.enter="submit"
                 autocomplete="off"
+                spellcheck="false"
             />
             <button class="sub-btn" @click="submit">[ SUBMIT ]</button>
           </div>
           <div v-if="wrongMsg" class="wrong-msg">✗ {{ wrongMsg }}</div>
           <div v-if="earnedCount < allClues.length" class="missing-note">
-            ⚠ {{ allClues.length - earnedCount }} clue(s) missing — complete all tasks for full evidence.
+            ⚠ {{ allClues.length - earnedCount }} evidence marker(s) still locked — complete all tasks for the full picture.
           </div>
         </div>
 
@@ -114,7 +120,7 @@
           <div class="vic-stats">
             <div class="vic-stat">
               <span class="vs-n">{{ earnedCount }}</span>
-              <span class="vs-l">CLUES</span>
+              <span class="vs-l">MARKERS</span>
             </div>
             <div class="vic-stat">
               <span class="vs-n">{{ attempts }}</span>
@@ -144,18 +150,15 @@ const soundStore    = useSoundStore()
 
 const CORRECT = 'ghost_proc_44'
 
-// Which mode brought us here
 const incomingMode = computed(() => route.params?.mode || 'advanced')
-
-// stage: 'basic-complete' | 'debrief' | 'victory'
 const stage = ref(incomingMode.value === 'basic' ? 'basic-complete' : 'debrief')
 
-// ── Clue objects ──────────────────────────────────────────────────────────────
+// ── Build evidence marker objects ─────────────────────────────────────────────
 function buildClues(mode, tasks) {
   return tasks.map((t, i) => ({
     word:   t.clue,
     earned: progressStore.isSolved(mode, t.id),
-    source: `${mode.slice(0,3).toUpperCase()} ${String(i+1).padStart(2,'0')}`,
+    source: `${mode === 'basic' ? 'BAS' : 'ADV'} ${String(i + 1).padStart(2, '0')}`,
   }))
 }
 
@@ -169,16 +172,8 @@ onMounted(() => {
 
 const allClues    = computed(() => [...basicClueObjs.value, ...advancedClueObjs.value])
 const earnedCount = computed(() => allClues.value.filter(c => c.earned).length)
-const basicEarned = computed(() => basicClueObjs.value.filter(c => c.earned).length)
 
-const basicFirstLetters = computed(() =>
-    basicClueObjs.value
-        .filter(c => c.earned)
-        .map(c => c.word[0])
-        .join('')
-)
-
-// ── Answer & submission ───────────────────────────────────────────────────────
+// ── Answer ────────────────────────────────────────────────────────────────────
 const answer   = ref('')
 const wrongMsg = ref('')
 const shaking  = ref(false)
@@ -192,7 +187,7 @@ function submit() {
     soundStore.play('victory')
     startMatrix()
   } else {
-    wrongMsg.value = 'That username does not match the evidence. Check your clue sequence.'
+    wrongMsg.value = `That username doesn't match our records. The account you're looking for was identified in Advanced Task 5.`
     shaking.value  = true
     soundStore.play('wrong')
     setTimeout(() => { shaking.value = false }, 600)

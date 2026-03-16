@@ -1,4 +1,3 @@
-
 // CIPHER DESIGN (explained in FinalView):
 //   The answer to the FinalView is a username the player directly observed
 //   in the query results during Advanced Task 5.
@@ -33,14 +32,14 @@ export const advancedTasks = [
 
     {
         id: 2,
-        story: `Four compromised accounts. But not all connected the same way.\n\nA real employee sitting at their desk uses a browser. Every browser sends a standard identifier in the user_agent field — it starts with "Mozilla". What you're seeing in these hostile sessions is different. Automated tooling. Scripts running against the API. Someone built infrastructure for this attack.\n\nThat distinction matters for attribution. This wasn't a person at a keyboard.`,
-        prompt: `Of the sessions connected from the hostile IP, how many were running automated tools rather than a browser?`,
+        story: `Four compromised accounts. But look at how they connected.\n\nA real employee at their desk uses a browser. Their sessions carry a user_agent string beginning with "Mozilla" — every major browser sends it. What you're seeing in these hostile sessions is something else entirely. Not one of them used a browser. Every single connection came from automated tooling — curl, python-requests, scripted API calls.\n\nThis isn't someone stumbling across a vulnerability and poking around out of curiosity. Someone built infrastructure for this attack. Tested it. Deployed it. This was rehearsed.`,
+        prompt: `Every session from the hostile IP left a user_agent record. How many of them came from automated tools rather than a browser?`,
         expectedAnswer: '4',
         clue: 'REMOTE',
         hints: [
-            'The user_agent column reveals what software made the connection.',
-            'Browser sessions follow a consistent naming pattern you can filter on.',
-            'You want the hostile IP sessions where the agent does not match that browser pattern.',
+            `The user_agent column reveals what software made each connection.`,
+            `Browser sessions follow a consistent naming pattern — you can filter on it to identify them, then invert the filter to find everything else.`,
+            `Count the rows from the hostile IP where the user_agent does not match the browser pattern.`,
         ],
         solution: `SELECT COUNT(*) AS automated_sessions
                    FROM sessions
@@ -48,7 +47,7 @@ export const advancedTasks = [
                      AND user_agent NOT LIKE 'Mozilla%';`,
         validate(res, answer) {
             if (parseInt(answer?.trim(), 10) === 4) return true
-            return 'Filter on the hostile IP address and exclude sessions where the user_agent begins with "Mozilla".'
+            return `Count every session from the hostile IP where the user_agent does not begin with the standard browser identifier.`
         },
     },
 
@@ -154,14 +153,14 @@ export const advancedTasks = [
 
     {
         id: 8,
-        story: `Forty-four entries gone. But they didn't get everything.\n\nYou need the full sequence — every action the hostile IP took, in chronological order. The complication: some of the accounts involved have NULL usernames (your ghost accounts), which means a standard JOIN would silently drop those rows from the results. You need every event visible, even the anonymous ones.\n\nThe second-to-last action tells you what they were doing right before they vanished.`,
-        prompt: `Reconstruct the complete hostile timeline. What action appears second-to-last before the attacker disconnected?`,
+        story: `Forty-four entries gone. But they didn't get everything.\n\nYou need the full sequence — every action the hostile IP took, in order, from first contact to final disconnect. The complication: some of the accounts involved have NULL usernames (the ghost accounts you identified earlier). A standard JOIN would silently drop those rows, leaving gaps in the timeline you can't afford.\n\nYou need every event visible. When you look at the complete picture, just before the logouts, the last thing the attacker did before going dark tells you the true purpose of the operation.`,
+        prompt: `Reconstruct the complete hostile activity timeline. What was the final action taken before the attacker's sessions ended?`,
         expectedAnswer: 'DATA_EXFIL',
         clue: 'SEQUENCE',
         hints: [
-            'A regular JOIN drops rows where the joined table has no match — there is a variant that preserves all rows from the left table regardless.',
-            'SQL has a function that substitutes a fallback value when a field is NULL — useful for displaying something instead of a blank username.',
-            'Filter to the hostile IP address, order chronologically, and count from the bottom of the result set.',
+            `A regular JOIN silently drops rows where no match exists in the joined table — there is a variant that keeps all rows from the left table regardless.`,
+            `SQL has a function that substitutes a fallback value when a column is NULL — useful for showing a placeholder instead of a blank username.`,
+            `Filter to the hostile IP, order chronologically, and look at the row just above the LOGOUT entries at the bottom.`,
         ],
         solution: `SELECT al.created_at,
                           al.action,
@@ -173,27 +172,7 @@ export const advancedTasks = [
                    ORDER BY al.created_at ASC;`,
         validate(res, answer) {
             if (answer?.trim().toUpperCase() === 'DATA_EXFIL') return true
-            return 'Build the full chronological timeline and read the second row from the bottom — not the last one.'
-        },
-    },
-
-    {
-        id: 9,
-        story: `DATA_EXFIL right up until the final LOGOUT.\n\nThe network layer captured what the application layer tried to hide. Four DATA_OUT bursts, each one a wave of records leaving over port 443, timed to the second with the exfiltration transactions you found earlier.\n\nThis is the number that goes in the breach notification. This is the figure the regulators will quote. It needs to be exact.`,
-        prompt: `The network layer recorded every byte that left the building. What is the total volume of data that was exfiltrated, in bytes?`,
-        expectedAnswer: '436200000',
-        clue: 'VOLUME',
-        hints: [
-            'The network_events table has a bytes_sent column and an event_type column.',
-            'You want only the events representing outbound data — check what event_type values exist first.',
-            'SUM() across all matching rows gives you the total byte count.',
-        ],
-        solution: `SELECT SUM(bytes_sent) AS total_bytes_exfiltrated
-                   FROM network_events
-                   WHERE event_type = 'DATA_OUT';`,
-        validate(res, answer) {
-            if (parseInt(answer?.trim(), 10) === 436200000) return true
-            return 'Sum the bytes_sent column, but only for the event type that represents outbound data transfers.'
+            return `Build the full chronological timeline and look at the last action before the LOGOUT entries at the bottom of the list.`
         },
     },
 

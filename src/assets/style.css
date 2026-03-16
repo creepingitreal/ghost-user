@@ -28,6 +28,11 @@
     color-scheme: dark;
 }
 
+body {
+    margin: 0 auto;
+    max-width: 840px;
+}
+
 /* ══════════════════════════════════════════════════
    LIGHT MODE
    Activate by adding class="light" to <html> or <body>,
