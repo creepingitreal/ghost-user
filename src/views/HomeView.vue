@@ -153,10 +153,10 @@ function getStartId(progress, total) {
 }
 
 const basicStartRoute = computed(() => ({
-  name: 'puzzle', params: { mode: 'basic', id: getStartId(basicProgress.value, 5) }
+  name: 'task', params: { mode: 'basic', id: getStartId(basicProgress.value, 5) }
 }))
 const advStartRoute = computed(() => ({
-  name: 'puzzle', params: { mode: 'advanced', id: getStartId(advProgress.value, 10) }
+  name: 'task', params: { mode: 'advanced', id: getStartId(advProgress.value, 10) }
 }))
 </script>
 
