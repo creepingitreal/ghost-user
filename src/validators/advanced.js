@@ -85,7 +85,7 @@ export const advancedTasks = [
             'Think about how to sort a column to put the most extreme value at the top.',
             "You only need the single most extreme row.",
         ],
-        solution: `SELECT user_id, amount, target, created_at
+        solution: `SELECT user_id, amount, "target", created_at
                    FROM transactions
                    ORDER BY amount ASC LIMIT 1;`,
         validate(res, answer) {
