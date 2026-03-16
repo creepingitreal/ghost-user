@@ -1,3 +1,4 @@
+
 // CIPHER DESIGN (explained in FinalView):
 //   The answer to the FinalView is a username the player directly observed
 //   in the query results during Advanced Task 5.
@@ -173,6 +174,26 @@ export const advancedTasks = [
         validate(res, answer) {
             if (answer?.trim().toUpperCase() === 'DATA_EXFIL') return true
             return `Build the full chronological timeline and look at the last action before the LOGOUT entries at the bottom of the list.`
+        },
+    },
+
+    {
+        id: 9,
+        story: `DATA_EXFIL right up until the final LOGOUT.\n\nThe network layer captured what the application layer tried to hide. Four DATA_OUT bursts, each one a wave of records leaving over port 443, timed to the second with the exfiltration transactions you found earlier.\n\nThis is the number that goes in the breach notification. This is the figure the regulators will quote. It needs to be exact.`,
+        prompt: `The network layer recorded every byte that left the building. What is the total volume of data that was exfiltrated, in bytes?`,
+        expectedAnswer: '436200000',
+        clue: 'VOLUME',
+        hints: [
+            'The network_events table has a bytes_sent column and an event_type column.',
+            'You want only the events representing outbound data — check what event_type values exist first.',
+            'SUM() across all matching rows gives you the total byte count.',
+        ],
+        solution: `SELECT SUM(bytes_sent) AS total_bytes_exfiltrated
+                   FROM network_events
+                   WHERE event_type = 'DATA_OUT';`,
+        validate(res, answer) {
+            if (parseInt(answer?.trim(), 10) === 436200000) return true
+            return 'Sum the bytes_sent column, but only for the event type that represents outbound data transfers.'
         },
     },
 
